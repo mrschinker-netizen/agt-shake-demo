@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AGT Shake"><meta name="robots" content="noindex"><style>html,body{margin:0}</style>
+<title>Apple Gathering Prototype</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Public+Sans:wght@400;600;700&display=swap">
+<style>
+/* Layout concept: one phone-width column, one screen at a time. Offer screen is a tree whose trunk bar shows the effort; exertion screen is a live gauge over a large shake pad. */
+:root{
+  --bg:#F7F5F0; --surface:#FFFDF8; --line:#E2DDD0; --fg:#1B2A41; --muted:#5B6472;
+  --accent:#C2622D; --accent-ink:#FFFFFF; --teal:#2A6F7F; --teal-ink:#FFFFFF; --leaf:#6F9A6B; --bark:#8A6A4A;
+  --good:#2F7D4F; --bad:#B3402A; --track:#EAE5D8;
+  --display:'EB Garamond', Georgia, serif; --body:'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121C2C; --surface:#1B2A41; --line:#2E4160; --fg:#F1EEE6; --muted:#A9B2C0;
+  --accent:#E8935C; --accent-ink:#1B1308; --teal:#5FB0C0; --teal-ink:#08222A; --leaf:#7FB37A; --bark:#B08A63;
+  --good:#6CC28A; --bad:#F0806A; --track:#26385A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121C2C; --surface:#1B2A41; --line:#2E4160; --fg:#F1EEE6; --muted:#A9B2C0;
+  --accent:#E8935C; --accent-ink:#1B1308; --teal:#5FB0C0; --teal-ink:#08222A; --leaf:#7FB37A; --bark:#B08A63;
+  --good:#6CC28A; --bad:#F0806A; --track:#26385A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.45;margin:0;
+  padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.1;margin:0;text-wrap:balance}
+h1{font-size:34px} h2{font-size:28px} h3{font-size:21px}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.muted{color:var(--muted)} .small{font-size:13px}
+section[hidden]{display:none}
+section{display:flex;flex-direction:column;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px}
+label{font-weight:600;font-size:14px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row>*{min-width:0}
+input[type=text],input[type=number],select{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+input[type=range]{width:100%;accent-color:var(--teal);min-height:36px}
+.check{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:15px}
+.check input{margin-top:4px;width:20px;height:20px;accent-color:var(--teal);flex:none}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;min-height:52px;padding:12px 18px;cursor:pointer;background:var(--teal);color:var(--teal-ink)}
+button.secondary{background:transparent;color:var(--fg);border:1px solid var(--line)}
+button.accent{background:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.status{font-size:14px;padding:8px 12px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.status.ok{border-color:var(--good);color:var(--good)} .status.warn{border-color:var(--bad);color:var(--bad)}
+.topbar{display:flex;justify-content:space-between;gap:8px;font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-weight:600;color:var(--fg)}
+.tree{width:100%;max-width:340px;margin:0 auto;display:block}
+.effort-line{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choices button{min-height:64px;font-size:18px}
+.gaugewrap{display:flex;gap:14px;align-items:stretch;height:300px}
+.gauge{position:relative;width:64px;background:var(--track);border-radius:12px;overflow:hidden;flex:none}
+.gauge .fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--teal)}
+.gauge .fill.over{background:var(--good)}
+.gauge .line{position:absolute;left:-2px;right:-2px;height:4px;background:var(--accent);border-radius:2px}
+.gauge .lbl{position:absolute;right:4px;font-size:11px;font-weight:700;color:var(--fg);mix-blend-mode:normal}
+.pad{flex:1;min-width:0;border:2px dashed var(--line);border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--surface);font-weight:600}
+.pad.live{border-color:var(--teal)}
+.bar{height:14px;background:var(--track);border-radius:8px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--accent)}
+.bar.thin{height:6px}.bar.thin>i{background:var(--muted)}
+.bigfb{font-family:var(--display);font-size:44px;text-align:center;padding:36px 0}
+.grid4{display:grid;grid-template-columns:auto repeat(4,1fr);gap:4px;align-items:center;font-size:12px;font-variant-numeric:tabular-nums}
+.cell{height:30px;border-radius:6px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.cell.acc{background:var(--teal);color:var(--teal-ink);border-color:var(--teal)}
+.cell.noeff{background:color-mix(in srgb,var(--teal) 45%,var(--surface));color:var(--fg)}
+.cell.fail{background:var(--surface);border:2px solid var(--accent);color:var(--accent)}
+.cell.skip{background:var(--track);color:var(--muted)}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:4px 8px;align-items:center;font-size:12px;font-variant-numeric:tabular-nums}
+.bars .b{height:12px;background:var(--track);border-radius:6px;overflow:hidden}.bars .b i{display:block;height:100%;background:var(--teal)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:6px 12px;font-size:13px}
+.stats b{font-variant-numeric:tabular-nums}
+pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height:120px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<main id="app">
+
+<section id="s-setup">
+  <div><p class="eyebrow">CoNECt Lab · BiAffect pilot</p><h1>Apple Gathering Prototype</h1></div>
+  <p class="muted">A phone version of the Apple Gathering Task with the grip device replaced by shaking. Numbers follow the published lab version (rewards 3, 6, 9, 12 apples; effort 20 to 80 percent of your own maximum). Everything is adjustable later.</p>
+
+  <div class="card">
+    <h3>Input</h3>
+    <p class="small muted">Phone motion cannot be read from inside a published page in most viewers. The check below tells us. If it fails, the shake pad measures finger speed instead, which lets us test the task logic and metrics but not real arm effort.</p>
+    <div class="row"><button id="btnMotion" class="secondary" type="button">Check phone motion sensor</button></div>
+    <div id="motionStatus" class="status">Motion sensor not checked yet. Using the shake pad.</div>
+    <div>
+      <label for="src">Input source</label>
+      <select id="src"><option value="pad">Shake pad (finger speed)</option><option value="motion" disabled>Phone motion (run the check first)</option></select>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Session</h3>
+    <div><label for="pid">Participant code</label><input id="pid" type="text" value="MS-01" autocomplete="off" autocapitalize="off"></div>
+    <div><label for="mode">Effort metric</label>
+      <select id="mode">
+        <option value="compare" selected>Compare all four (4 blocks of 16 offers)</option>
+        <option value="amp">Amplitude: shake strength sets the effort</option>
+        <option value="dur">Duration: shaking time sets the effort</option>
+        <option value="work">Combined: total shaking work sets the effort</option>
+        <option value="fac">Separate: strength and time vary independently</option>
+      </select></div>
+    <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
+    <label class="check"><input id="optTotal" type="checkbox"><span>Show a running apple total (open stakes question)</span></label>
+    <label class="check"><input id="optMotiv" type="checkbox"><span>Ask for a motivation rating on every offer (extended AGT)</span></label>
+    <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold: the gauge resets if you drop below the line</span></label>
+    <label class="check"><input id="optPractice" type="checkbox" checked><span>Practice the four effort levels before each block</span></label>
+    <div><label for="fixedAmp">Fixed strength in the duration metric (percent of maximum)</label><input id="fixedAmp" type="number" min="30" max="70" value="50"></div>
+  </div>
+
+  <button id="btnStart" class="accent" type="button">Start</button>
+  <div id="saveStatus" class="status small">Data saving: checking.</div>
+</section>
+
+<section id="s-mood" hidden>
+  <div><p class="eyebrow">Before you start</p><h2>How are you right now?</h2></div>
+  <div class="card">
+    <div><label for="mood">Mood: <span id="moodV">50</span></label><input id="mood" type="range" min="0" max="100" value="50"><div class="row small muted" style="justify-content:space-between"><span>Very low</span><span>Very high</span></div></div>
+    <div><label for="energy">Energy: <span id="energyV">50</span></label><input id="energy" type="range" min="0" max="100" value="50"><div class="row small muted" style="justify-content:space-between"><span>None</span><span>Extreme</span></div></div>
+  </div>
+  <button id="btnMoodNext" type="button">Continue to calibration</button>
+</section>
+
+<section id="s-cal" hidden>
+  <div class="topbar"><span id="calCount">Calibration</span><span class="chip" id="calSrc"></span></div>
+  <div><h2 id="calTitle">Shake as hard as you can</h2><p class="muted" id="calMsg"></p></div>
+  <div class="gaugewrap">
+    <div class="gauge"><div class="fill" id="calFill"></div></div>
+    <div class="pad" id="calPad"><span id="calPadTxt">Get ready</span></div>
+  </div>
+  <div class="bar"><i id="calBar"></i></div>
+</section>
+
+<section id="s-blockintro" hidden>
+  <div class="topbar"><span id="biCount"></span><span class="chip" id="biSrc"></span></div>
+  <div><p class="eyebrow" id="biEyebrow"></p><h2 id="biTitle"></h2></div>
+  <div class="card"><p id="biText"></p><p class="small muted" id="biSub"></p></div>
+  <button id="btnBlockGo" type="button">Go</button>
+</section>
+
+<section id="s-offer" hidden>
+  <div class="topbar"><span id="offProg"></span><span class="chip" id="offTotal" hidden></span></div>
+  <div id="offTree"></div>
+  <div class="effort-line" id="offEffort"></div>
+  <div id="motivWrap" hidden class="card"><label for="motiv">How motivated are you to take this offer? <span id="motivV">50</span></label><input id="motiv" type="range" min="0" max="100" value="50"><div class="row small muted" style="justify-content:space-between"><span>Not at all</span><span>Very</span></div></div>
+  <div class="choices"><button id="btnSkip" class="secondary" type="button">Skip</button><button id="btnAccept" class="accent" type="button">Accept</button></div>
+</section>
+
+<section id="s-exert" hidden>
+  <div class="topbar"><span id="exInfo"></span><span class="chip" id="exTotal" hidden></span></div>
+  <div class="bar thin"><i id="exWindow"></i></div>
+  <div class="gaugewrap">
+    <div class="gauge"><div class="fill" id="exFill"></div><div class="line" id="exLine"></div></div>
+    <div class="pad" id="exPad"><span id="exPadTxt">Shake</span></div>
+  </div>
+  <div class="bar"><i id="exBar"></i></div>
+  <p class="small muted" id="exHint"></p>
+</section>
+
+<section id="s-feedback" hidden><div class="bigfb" id="fbText"></div><p class="muted" id="fbSub" style="text-align:center"></p></section>
+
+<section id="s-results" hidden>
+  <div><p class="eyebrow">Playthrough complete</p><h2>Your results</h2></div>
+  <div class="card"><p id="saveMsg"></p>
+    <div class="row"><button id="btnDl" class="secondary" type="button">Save a copy</button><button id="btnCopy" class="secondary" type="button">Copy data</button></div>
+    <p class="small muted">Session ID <b id="sidOut"></b></p></div>
+  <div id="resBlocks" style="display:flex;flex-direction:column;gap:16px"></div>
+  <button id="btnAgain" type="button" class="secondary">Run another session</button>
+</section>
+
+</main>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var TS=1;
+var now=function(){return performance.now()*TS};
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms/TS)})};
+var SCREENS=['setup','mood','cal','blockintro','offer','exert','feedback','results'];
+function show(id){SCREENS.forEach(function(s){$('#s-'+s).hidden=(s!==id)});window.scrollTo(0,0)}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+function mean(a){return a.length?a.reduce(function(s,x){return s+x},0)/a.length:null}
+
+/* ---------- constants from the published AGT (Valton et al. 2025, bioRxiv version) ---------- */
+var REWARDS=[3,6,9,12];
+var EFFORT_PCT=[20,40,60,80];
+var FLOOR=0.10;           /* normalised amplitude below this counts as tremor, not effort */
+var WIN_MS=250;           /* amplitude = RMS of the signal over the last 250 ms */
+var MODES={
+  amp:{name:'Amplitude',desc:'Effort is how hard you shake. Keep your shake above the orange line until the bar fills (3 seconds above the line in total).'},
+  dur:{name:'Duration',desc:'Effort is how long you shake. The strength needed is fixed. Longer trees need more total time above the orange line.'},
+  work:{name:'Combined',desc:'Effort is total shaking work: strength and time together. You can shake hard for a short time or gently for longer.'},
+  fac:{name:'Separate',desc:'Strength and time are set independently. Each tree shows both a strength level and a time.'}
+};
+
+/* ---------- input layer ---------- */
+var Input={source:'pad',motionOK:false,inject:null,buf:[],pad:{x:0,y:0,lx:null,ly:null,active:false},grav:null,motionN:0};
+function pushSample(t,v){Input.buf.push([t,v]);while(Input.buf.length&&Input.buf[0][0]<t-600)Input.buf.shift()}
+function ampNow(t){var s=0,n=0,b=Input.buf;for(var i=b.length-1;i>=0;i--){if(b[i][0]<t-WIN_MS)break;s+=b[i][1]*b[i][1];n++}return n?Math.sqrt(s/n):0}
+function sampleInput(t,dt){
+  if(Input.inject!==null){pushSample(t,Input.inject);return}
+  if(Input.source==='pad'){
+    var p=Input.pad,v=0;
+    if(p.active&&p.lx!==null&&dt>0){v=Math.hypot(p.x-p.lx,p.y-p.ly)/(dt/1000)}
+    p.lx=p.active?p.x:null;p.ly=p.active?p.y:null;
+    pushSample(t,v);
+  }
+}
+function onMotion(e){
+  Input.motionN++;
+  var a=e.acceleration,g=e.accelerationIncludingGravity,v=null;
+  if(a&&a.x!==null&&a.y!==null&&a.z!==null){v=Math.sqrt(a.x*a.x+a.y*a.y+a.z*a.z)}
+  else if(g&&g.x!==null){
+    if(!Input.grav)Input.grav=[g.x,g.y,g.z];
+    for(var k=0;k<3;k++){Input.grav[k]=Input.grav[k]*0.98+[g.x,g.y,g.z][k]*0.02}
+    v=Math.sqrt(Math.pow(g.x-Input.grav[0],2)+Math.pow(g.y-Input.grav[1],2)+Math.pow(g.z-Input.grav[2],2));
+  }
+  if(v!==null&&Input.source==='motion')pushSample(now(),v);
+  else if(v!==null)Input.lastMotion=v;
+}
+function attachPad(el){
+  el.addEventListener('pointerdown',function(e){try{el.setPointerCapture(e.pointerId)}catch(_){}Input.pad.active=true;Input.pad.x=e.clientX;Input.pad.y=e.clientY;Input.pad.lx=e.clientX;Input.pad.ly=e.clientY;e.preventDefault()});
+  el.addEventListener('pointermove',function(e){if(Input.pad.active){Input.pad.x=e.clientX;Input.pad.y=e.clientY}});
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(n){el.addEventListener(n,function(){Input.pad.active=false})});
+}
+['#calPad','#exPad'].forEach(function(s){attachPad($(s))});
+
+var motionListening=false;
+function checkMotion(){
+  var st=$('#motionStatus');
+  st.className='status';st.textContent='Checking. If asked, allow motion access, then shake the phone for a moment.';
+  var ask=(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')?DeviceMotionEvent.requestPermission():Promise.resolve('granted');
+  return Promise.resolve(ask).then(function(res){
+    if(res!=='granted'){fail('Motion permission was not granted. Using the shake pad.');return}
+    if(typeof window.addEventListener!=='function'||typeof DeviceMotionEvent==='undefined'){fail('This browser has no motion sensor API. Using the shake pad.');return}
+    if(!motionListening){window.addEventListener('devicemotion',onMotion);motionListening=true}
+    Input.motionN=0;
+    return new Promise(function(r){setTimeout(r,2500)}).then(function(){
+      if(Input.motionN>=5){
+        Input.motionOK=true;
+        var o=$('#src').querySelector('option[value="motion"]');o.disabled=false;o.textContent='Phone motion (sensor working)';
+        $('#src').value='motion';Input.source='motion';
+        st.className='status ok';st.textContent='Motion sensor working ('+Input.motionN+' readings). Using phone motion.';
+      }else fail('No motion readings arrived. The viewer blocks motion here. Using the shake pad.');
+    });
+  }).catch(function(){fail('Motion check failed. Using the shake pad.')});
+  function fail(m){Input.motionOK=false;st.className='status warn';st.textContent=m;$('#src').value='pad';Input.source='pad'}
+}
+$('#btnMotion').addEventListener('click',checkMotion);
+$('#src').addEventListener('change',function(){Input.source=this.value});
+
+/* ---------- storage (db capability, with local copy for export) ---------- */
+var DB=null,dbReady=false,saveLog={ok:0,fail:0,last:''};
+function initDb(){
+  if(!window.claude||typeof window.claude.use!=='function'){setSave('Data is not stored online. At the end, tap Save a copy (or Copy data) and send me the file.',false);return}
+  window.claude.use('db').then(function(d){DB=d;dbReady=!!d;setSave(d?'Data saving: on. Each block is saved when it ends.':'Data is not stored online. At the end, tap Save a copy (or Copy data) and send me the file.',!!d)}).catch(function(){setSave('Data saving is unavailable. Use Save a copy or Copy data at the end.',false)});
+}
+function setSave(msg,ok){var e=$('#saveStatus');e.textContent=msg;e.className='status small '+(ok?'ok':'')}
+function clean(o){return JSON.parse(JSON.stringify(o))}
+function dbSet(path,data){
+  if(!DB)return Promise.resolve(false);
+  return DB.doc(path).set(clean(data)).then(function(){saveLog.ok++;return true}).catch(function(e){saveLog.fail++;saveLog.last=(e&&e.code)||'error';return false});
+}
+
+/* ---------- session state ---------- */
+var SES=null;
+function newSession(){
+  var mode=$('#mode').value;
+  SES={
+    version:'agt-shake-proto-0.1',
+    sid:'s'+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36),
+    pid:$('#pid').value.trim()||'anon',
+    startedAt:new Date().toISOString(),
+    tz:(Intl.DateTimeFormat().resolvedOptions().timeZone)||'',
+    tzOffsetMin:new Date().getTimezoneOffset(),
+    localHour:new Date().getHours()+new Date().getMinutes()/60,
+    userAgent:navigator.userAgent,
+    screen:[window.innerWidth,window.innerHeight,window.devicePixelRatio||1],
+    inputSource:Input.source,motionOK:Input.motionOK,
+    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,motivation:$('#optMotiv').checked,strict:$('#optStrict').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:0.25},
+    mood:null,energy:null,calibration:null,blocks:[],endedAt:null,totalApples:0
+  };
+  return SES;
+}
+
+/* ---------- effort specifications ---------- */
+function effortSpec(mode,idx){
+  var pct=EFFORT_PCT[idx],fa=SES.settings.fixedAmp;
+  if(mode==='amp')return{kind:'time',ampT:pct/100,durT:3,windowMs:6000,vis:{h:pct/100,secs:3},txt:['Strength '+pct+'%','3.0 s'],pct:pct};
+  if(mode==='dur'){var d=[1.5,3,4.5,6][idx];return{kind:'time',ampT:fa,durT:d,windowMs:(d+3)*1000,vis:{h:fa,secs:d},txt:['Strength '+Math.round(fa*100)+'%',d.toFixed(1)+' s'],pct:pct}}
+  if(mode==='work')return{kind:'work',workT:pct/100,windowMs:10000,vis:{h:pct/100,secs:null},txt:['Total effort '+pct+'%'],pct:pct};
+  var c=[[0.4,2],[0.4,4],[0.7,2],[0.7,4]][idx];
+  return{kind:'time',ampT:c[0],durT:c[1],windowMs:(c[1]+3)*1000,vis:{h:c[0],secs:c[1]},txt:['Strength '+Math.round(c[0]*100)+'%',c[1].toFixed(1)+' s'],pct:null};
+}
+
+/* ---------- drawing ---------- */
+var APPLES=[[150,115],[100,85],[215,90],[95,150],[210,150],[155,60],[135,175],[185,180],[245,120],[70,110],[125,45],[200,40]];
+function treeSVG(n,fill,secs){
+  var a='';for(var i=0;i<n;i++){var p=APPLES[i];a+='<circle cx="'+p[0]+'" cy="'+p[1]+'" r="15" fill="var(--accent)"/><circle cx="'+(p[0]-5)+'" cy="'+(p[1]-5)+'" r="4" fill="#fff" opacity=".35"/>'}
+  var th=80,h=Math.round(th*fill),ticks='';
+  for(var k=1;k<4;k++){var y=232+th-th*k/4;ticks+='<line x1="140" x2="182" y1="'+y+'" y2="'+y+'" stroke="var(--bg)" stroke-width="1.5" opacity=".7"/>'}
+  var clock=secs?'<text x="212" y="285" font-size="18" font-weight="700" fill="var(--fg)" font-family="var(--body)">'+secs.toFixed(1)+' s</text>':'';
+  return '<svg class="tree" viewBox="0 0 320 330" role="img" aria-label="Tree with '+n+' apples and a trunk bar filled to '+Math.round(fill*100)+' percent'+(secs?', '+secs+' seconds':'')+'">'
+   +'<ellipse cx="160" cy="115" rx="140" ry="105" fill="var(--leaf)"/>'+a
+   +'<rect x="125" y="220" width="70" height="100" rx="8" fill="var(--bark)"/>'
+   +'<rect x="139" y="232" width="42" height="'+th+'" rx="5" fill="var(--track)"/>'
+   +'<rect x="139" y="'+(232+th-h)+'" width="42" height="'+h+'" rx="5" fill="var(--teal)"/>'+ticks+clock+'</svg>';
+}
+
+/* ---------- exertion engine ---------- */
+function runExertion(cfg){
+  return new Promise(function(resolve){
+    var A0=cfg.Amax||1,t0=now(),last=t0,above=0,belowMs=0,W=0,peak=0,nextTr=t0,trace=[],series=[],done=false,ok=false;
+    var fill=cfg.fillEl,bar=cfg.barEl,win=cfg.winEl,line=cfg.lineEl;
+    if(line&&cfg.thr!=null)line.style.bottom=(clamp(cfg.thr,0,1.2)/1.2*100)+'%';
+    Input.buf.length=0;Input.pad.lx=null;
+    function step(){
+      var t=now(),dt=Math.min(100*TS,t-last);last=t;
+      sampleInput(t,dt);
+      var A=ampNow(t),a=A/A0;peak=Math.max(peak,A);
+      var thr=cfg.kind==='time'?cfg.ampT:FLOOR;
+      if(cfg.kind==='time'){
+        if(a>=cfg.ampT){above+=dt;belowMs=0}else{belowMs+=dt;if(cfg.strict&&belowMs>300)above=0}
+      }else if(cfg.kind==='work'){W+=Math.max(0,a-FLOOR)*dt/1000}
+      var prog=0;
+      if(cfg.kind==='time')prog=above/(cfg.durT*1000);else if(cfg.kind==='work')prog=W/cfg.workT;
+      if(cfg.kind==='cal'){prog=(t-t0)/cfg.windowMs;series.push([Math.round(t-t0),A])}
+      fill.style.height=(clamp(a,0,1.2)/1.2*100)+'%';fill.classList.toggle('over',cfg.thr!=null&&a>=cfg.thr);
+      bar.style.width=(clamp(prog,0,1)*100)+'%';win.style.width=(clamp((t-t0)/cfg.windowMs,0,1)*100)+'%';
+      if(t>=nextTr){trace.push(Math.round(clamp(a,0,3)*100));nextTr+=100}
+      if(cfg.kind!=='cal'&&prog>=1){ok=true;done=true}
+      if(t-t0>=cfg.windowMs)done=true;
+      if(done){resolve({success:ok,peak:peak,peakNorm:peak/A0,timeAboveMs:Math.round(above),work:W,usedMs:Math.round(t-t0),trace:trace,series:series});return}
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+/* ---------- calibration ---------- */
+var CAL=null;
+async function calibrate(){
+  show('cal');
+  $('#calSrc').textContent=Input.source==='motion'?'Phone motion':'Shake pad';
+  var runs=[];
+  while(true){
+    runs=[];
+    for(var i=0;i<6;i++){
+      $('#calCount').textContent='Calibration '+(i+1)+' of 6';
+      $('#calTitle').textContent='Shake as hard as you can';
+      $('#calMsg').textContent=Input.source==='motion'?'Hold the phone and shake it hard for 5 seconds.':'Scribble back and forth on the pad as fast as you can for 5 seconds.';
+      $('#calPad').classList.remove('live');$('#calPadTxt').textContent='Get ready';
+      $('#calBar').style.width='0';$('#calFill').style.height='0';
+      await sleep(i===0?1800:1400);
+      $('#calPad').classList.add('live');$('#calPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';
+      var r=await runExertion({kind:'cal',Amax:1,windowMs:5000,fillEl:$('#calFill'),barEl:$('#calBar'),winEl:document.createElement('i'),lineEl:null,thr:null});
+      runs.push(r);
+      $('#calPad').classList.remove('live');$('#calPadTxt').textContent=i<5?'Rest':'Done';
+      if(i<5)await sleep(1800);
+    }
+    var last3=runs.slice(3),Amax=Math.max.apply(null,last3.map(function(r){return r.peak}));
+    var minOk=Input.inject!==null?1:(Input.source==='motion'?2:150);
+    if(Amax<minOk){
+      $('#calTitle').textContent='That was too gentle to measure';
+      $('#calMsg').textContent='Shake harder and we will repeat the calibration.';
+      await sleep(2500);continue;
+    }
+    var works=last3.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w});
+    var Wmax=Math.max.apply(null,works);
+    CAL={Amax:Amax,Wmax:Wmax,source:Input.source,peaks:runs.map(function(r){return r.peak}),
+         works:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w})};
+    break;
+  }
+  SES.calibration=CAL;
+  $('#calTitle').textContent='Calibrated';$('#calMsg').textContent='Your maximum shake is now 100 percent. All effort levels are set from it.';
+  await sleep(1400);
+}
+
+/* ---------- blocks and trials ---------- */
+function click(el){return new Promise(function(res){el.addEventListener('click',function h(){el.removeEventListener('click',h);res()})})}
+function buildOffers(reps){
+  var all=[];for(var r=0;r<4;r++)for(var e=0;e<4;e++)for(var k=0;k<reps;k++)all.push({ri:r,ei:e});
+  for(var tries=0;tries<200;tries++){all=shuffle(all);var okk=true;for(var i=1;i<all.length;i++){if(all[i].ri===all[i-1].ri&&all[i].ei===all[i-1].ei){okk=false;break}}if(okk)break}
+  var idx=shuffle(all.map(function(_,i){return i})),nNo=Math.floor(all.length*0.25);
+  idx.slice(0,nNo).forEach(function(i){all[i].noEffort=true});
+  return all;
+}
+function setTotal(){var on=SES.settings.showTotal;['#offTotal','#exTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples})}
+
+async function practiceBlock(mode){
+  for(var i=0;i<4;i++){
+    var spec=effortSpec(mode,i);
+    show('exert');setTotal();$('#exTotal').hidden=true;
+    $('#exInfo').textContent='Practice '+(i+1)+' of 4 · '+spec.txt.join(' · ');
+    $('#exHint').textContent='No apples at stake. This is what this effort level feels like.';
+    $('#exPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';
+    $('#exPad').classList.add('live');
+    await runExertion(execCfg(spec));
+    $('#exPad').classList.remove('live');
+    $('#fbText').textContent='Practice done';$('#fbSub').textContent='';show('feedback');await sleep(900);
+  }
+}
+function execCfg(spec){
+  var c={kind:spec.kind,Amax:CAL.Amax,windowMs:spec.windowMs,strict:SES.settings.strict,fillEl:$('#exFill'),barEl:$('#exBar'),winEl:$('#exWindow'),lineEl:$('#exLine')};
+  if(spec.kind==='time'){c.ampT=spec.ampT;c.durT=spec.durT;c.thr=spec.ampT}else{c.workT=spec.workT*CAL.Wmax;c.thr=FLOOR}
+  return c;
+}
+
+async function runBlock(mode,bi,nBlocks,reps){
+  var info=MODES[mode];
+  show('blockintro');
+  $('#biCount').textContent='Block '+(bi+1)+' of '+nBlocks;$('#biSrc').textContent=Input.source==='motion'?'Phone motion':'Shake pad';
+  $('#biEyebrow').textContent='Effort metric';$('#biTitle').textContent=info.name;$('#biText').textContent=info.desc;
+  $('#biSub').textContent='Each offer shows apples and an effort level. Accept to try, or skip to see the next tree. Skipping is instant.';
+  await click($('#btnBlockGo'));
+  if(SES.settings.practice)await practiceBlock(mode);
+  var offers=buildOffers(reps),blk={idx:bi,mode:mode,startedAt:new Date().toISOString(),trials:[]};
+  for(var n=0;n<offers.length;n++){
+    var o=offers[n],spec=effortSpec(mode,o.ei),reward=REWARDS[o.ri];
+    show('offer');setTotal();
+    $('#offProg').textContent=info.name+' · offer '+(n+1)+' of '+offers.length;
+    $('#offTree').innerHTML=treeSVG(reward,spec.vis.h,spec.vis.secs);
+    $('#offEffort').innerHTML=spec.txt.map(function(t){return '<span class="chip">'+t+'</span>'}).join('');
+    var mw=$('#motivWrap');mw.hidden=!SES.settings.motivation;$('#motiv').value=50;$('#motivV').textContent='50';var touched=false;
+    $('#motiv').oninput=function(){touched=true;$('#motivV').textContent=this.value};
+    var onset=now(),wall=new Date(),choice=await new Promise(function(res){
+      function a(){cl();res('accept')}function s(){cl();res('skip')}
+      function cl(){$('#btnAccept').removeEventListener('click',a);$('#btnSkip').removeEventListener('click',s)}
+      $('#btnAccept').addEventListener('click',a);$('#btnSkip').addEventListener('click',s);
+    });
+    var rt=Math.round(now()-onset);
+    var rec={n:n+1,reward:reward,rewardIdx:o.ri,effortIdx:o.ei,effortPct:spec.pct,ampTarget:spec.ampT!==undefined?spec.ampT:null,durTarget:spec.durT!==undefined?spec.durT:null,workTarget:spec.workT!==undefined?spec.workT:null,
+      noEffort:!!o.noEffort,motivation:SES.settings.motivation?{value:parseInt($('#motiv').value,10),touched:touched}:null,
+      onsetAt:wall.toISOString(),localHour:wall.getHours()+wall.getMinutes()/60,rtMs:rt,choice:choice,executed:false,success:null,won:0};
+    if(choice==='accept'){
+      if(o.noEffort){
+        rec.won=reward;SES.totalApples+=reward;
+        $('#fbText').textContent='No squeeze needed. +'+reward+' apples';$('#fbSub').textContent='';show('feedback');await sleep(1100);
+      }else{
+        show('exert');setTotal();
+        $('#exInfo').textContent=info.name+' · '+spec.txt.join(' · ');
+        $('#exHint').textContent=spec.kind==='work'?'Fill the bar with total shaking work before the time runs out.':'Stay above the orange line until the bar fills.';
+        $('#exPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';$('#exPad').classList.add('live');
+        var r=await runExertion(execCfg(spec));
+        $('#exPad').classList.remove('live');
+        rec.executed=true;rec.success=r.success;rec.peakNorm=Math.round(r.peakNorm*1000)/1000;rec.timeAboveMs=r.timeAboveMs;rec.workDone=Math.round(r.work*1000)/1000;rec.usedMs=r.usedMs;rec.trace=r.trace;
+        if(r.success){rec.won=reward;SES.totalApples+=reward;$('#fbText').textContent='+'+reward+' apples';$('#fbSub').textContent=''}
+        else{$('#fbText').textContent='Not enough this time';$('#fbSub').textContent='No apples for this tree.'}
+        show('feedback');await sleep(1100);
+      }
+    }else{
+      $('#fbText').textContent='Skipped';$('#fbSub').textContent='';show('feedback');await sleep(350);
+    }
+    blk.trials.push(rec);
+  }
+  blk.endedAt=new Date().toISOString();SES.blocks.push(blk);
+  dbSet('agt_blocks/'+SES.sid+'_'+bi,{sid:SES.sid,pid:SES.pid,block:blk});
+}
+
+/* ---------- results ---------- */
+function pct(x){return x===null?'n/a':Math.round(x*100)+'%'}
+function renderResults(){
+  $('#sidOut').textContent=SES.sid;
+  $('#saveMsg').textContent=DB?(saveLog.fail?'Saved '+saveLog.ok+' item(s) to the artifact; '+saveLog.fail+' failed ('+saveLog.last+'). Use Save a copy as a backup.':'Saved to the artifact. Claude can read this session now.'):'Not saved to the artifact in this view. Use Save a copy or Copy data.';
+  var host=$('#resBlocks');host.innerHTML='';
+  SES.blocks.forEach(function(b){
+    var T=b.trials,acc=T.filter(function(t){return t.choice==='accept'}),ex=T.filter(function(t){return t.executed});
+    var card=document.createElement('div');card.className='card';
+    var h='<h3>'+MODES[b.mode].name+'</h3><div class="stats"><span>Accepted <b>'+pct(acc.length/T.length)+'</b></span><span>Succeeded when squeezing <b>'+pct(ex.length?ex.filter(function(t){return t.success}).length/ex.length:null)+'</b></span><span>Mean decision time <b>'+(Math.round(mean(T.map(function(t){return t.rtMs}))/10)/100)+' s</b></span><span>Mean peak shake <b>'+pct(mean(ex.map(function(t){return t.peakNorm})))+'</b> of max</span></div>';
+    h+='<p class="small muted">Rows are reward (3 to 12 apples), columns are effort level (low to high). Filled is accepted, orange outline is accepted but missed, grey is skipped.</p><div class="grid4"><span></span>'+EFFORT_PCT.map(function(p,i){return '<span style="text-align:center">E'+(i+1)+'</span>'}).join('');
+    for(var r=3;r>=0;r--){h+='<span>'+REWARDS[r]+'</span>';for(var e=0;e<4;e++){
+      var ts=T.filter(function(t){return t.rewardIdx===r&&t.effortIdx===e}),cl='skip',tx='';
+      if(ts.length){var t=ts[0];if(t.choice==='accept'){if(t.noEffort){cl='noeff';tx='free'}else if(t.success){cl='acc';tx='ok'}else{cl='fail';tx='miss'}}else{cl='skip';tx='skip'}}
+      if(ts.length>1){var a2=ts.filter(function(t){return t.choice==='accept'}).length;cl=a2>ts.length/2?'acc':'skip';tx=a2+'/'+ts.length}
+      h+='<div class="cell '+cl+'">'+tx+'</div>'}}
+    h+='</div>';
+    function rate(sel){return sel.length?sel.filter(function(t){return t.choice==='accept'}).length/sel.length:0}
+    h+='<div class="bars"><b class="small">By effort</b><span></span>';
+    for(var e2=0;e2<4;e2++){var v=rate(T.filter(function(t){return t.effortIdx===e2}));h+='<span>E'+(e2+1)+'</span><div class="b"><i style="width:'+(v*100)+'%"></i></div>'}
+    h+='<b class="small">By reward</b><span></span>';
+    for(var r2=0;r2<4;r2++){var v2=rate(T.filter(function(t){return t.rewardIdx===r2}));h+='<span>'+REWARDS[r2]+'</span><div class="b"><i style="width:'+(v2*100)+'%"></i></div>'}
+    h+='</div>';
+    card.innerHTML=h;host.appendChild(card);
+  });
+}
+function sessionJSON(){return JSON.stringify(clean(SES))}
+$('#btnDl').addEventListener('click',function(){
+  var btn=this;
+  if(!(window.claude&&window.claude.use)){
+    try{var bl=new Blob([sessionJSON()],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download='agt_'+SES.sid+'.json';document.body.appendChild(a);a.click();a.remove();btn.textContent='Saved (check Downloads)'}catch(e){btn.textContent='Not saved. Use Copy data'}
+    return;
+  }
+  window.claude.use('downloads').then(function(d){
+    if(!d){btn.textContent='Downloads unavailable here';return}
+    return d.save({filename:'agt_'+SES.sid+'.json',data:sessionJSON()}).then(function(){btn.textContent='Saved'}).catch(function(){btn.textContent='Not saved'});
+  });
+});
+$('#btnCopy').addEventListener('click',function(){
+  var btn=this,s=sessionJSON();
+  (navigator.clipboard?navigator.clipboard.writeText(s):Promise.reject()).then(function(){btn.textContent='Copied'}).catch(function(){
+    var pre=document.createElement('pre');pre.textContent=s;btn.parentNode.parentNode.appendChild(pre);var r=document.createRange();r.selectNodeContents(pre);var sel=getSelection();sel.removeAllRanges();sel.addRange(r);btn.textContent='Select and copy the text below';
+  });
+});
+$('#btnAgain').addEventListener('click',function(){location.reload()});
+
+/* ---------- flow ---------- */
+$('#mode').addEventListener('change',function(){$('#repsWrap').hidden=(this.value==='compare')});
+$('#mood').addEventListener('input',function(){$('#moodV').textContent=this.value});
+$('#energy').addEventListener('input',function(){$('#energyV').textContent=this.value});
+$('#btnStart').addEventListener('click',function(){newSession();show('mood')});
+$('#btnMoodNext').addEventListener('click',async function(){
+  SES.mood=parseInt($('#mood').value,10);SES.energy=parseInt($('#energy').value,10);
+  await calibrate();
+  await dbSet('agt_sessions/'+SES.sid,clean(SES));
+  var mode=SES.settings.mode,order=mode==='compare'?shuffle(['amp','dur','work','fac']):[mode],reps=SES.settings.reps;
+  SES.blockOrder=order;
+  for(var i=0;i<order.length;i++)await runBlock(order[i],i,order.length,reps);
+  SES.endedAt=new Date().toISOString();
+  await dbSet('agt_sessions/'+SES.sid,clean(SES));
+  renderResults();show('results');
+});
+window.__agt={setInject:function(v){Input.inject=v},setTS:function(v){TS=v},session:function(){return SES},input:Input};
+initDb();
+})();
+</script>
+
+</body></html>
