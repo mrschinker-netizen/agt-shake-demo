@@ -1,5 +1,42 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AGT Shake"><meta name="robots" content="noindex"><style>html,body{margin:0}</style>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="AGT Shake"><meta name="robots" content="noindex"><style>html,body{margin:0}
+/* full-screen calibration */
+.fs [hidden]{display:none!important}
+.fs{position:fixed;inset:0;z-index:50;background:#000;color:#fff;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;height:100vh;height:100dvh}
+.fslayer{position:absolute;inset:0;pointer-events:none}
+#calGreen{background:#1fbf5b;opacity:0}
+#calBlue{background:#1e6bff;transform:scaleY(0);transform-origin:50% 100%;will-change:transform}
+.big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-family:'Arial Black','Helvetica Neue',Impact,system-ui,sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.02em;line-height:1;color:#fff;text-shadow:0 4px 30px rgba(0,0,0,.35);white-space:nowrap}
+.big>span{display:block;transform-origin:50% 55%;will-change:transform}
+.big.w-ready>span{font-size:min(21vw,26vh)}
+.big.w-set>span{font-size:min(34vw,40vh)}
+.big.w-go>span{font-size:min(40vw,44vh);color:#1fbf5b;text-shadow:none}
+.big.w-num>span{font-size:min(78vw,60vh)}
+.big.w-rest>span{font-size:min(24vw,22vh);text-shadow:none;letter-spacing:.04em}
+.big>span.grow{animation:grow .7s cubic-bezier(.18,.9,.25,1) forwards}
+.big>span.flood{animation:flood .5s cubic-bezier(.6,0,.9,.4) forwards}
+.big>span.fade{animation:fadein .35s ease-out forwards}
+@keyframes grow{0%{transform:scale(.06);opacity:0}15%{opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes flood{0%{transform:scale(1);opacity:1}100%{transform:scale(34);opacity:1}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.caltag{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75);pointer-events:none}
+.intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:24px;padding:max(28px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) max(32px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));background:radial-gradient(120% 80% at 50% 0%,#12263f 0%,#070b12 62%,#000 100%);text-align:center}
+.introbody{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;max-width:560px}
+.introeye{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#5fd0e0;font-weight:700}
+.intro h2{font-size:clamp(38px,11vw,60px);color:#fff}
+.introtext{font-size:clamp(22px,6vw,30px);line-height:1.35;color:#eef2f7;font-weight:500;text-wrap:balance}
+.introchips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.introchips span{border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 14px;font-size:14px;color:#aeb9c8;font-weight:600}
+.calbtn{background:#19b6c9;color:#03242a;font-size:24px;min-height:68px;min-width:min(78vw,340px);border-radius:999px;box-shadow:0 0 0 6px rgba(25,182,201,.22),0 12px 30px rgba(0,0,0,.45);letter-spacing:.04em}
+#btnCalDone{position:absolute;left:50%;transform:translateX(-50%);bottom:max(32px,env(safe-area-inset-bottom,0px));z-index:5}
+.checker{position:absolute;inset:0;background:repeating-conic-gradient(#000 0% 25%,#fff 0% 50%) 0 0/26vmin 26vmin;animation:checkin .6s ease-out}
+@keyframes checkin{from{opacity:0;transform:scale(1.35)}to{opacity:1;transform:scale(1)}}
+.stamp{position:absolute;inset:0;margin:auto;width:min(86vw,60vh,430px);height:min(86vw,60vh,430px);transform:rotate(-13deg);pointer-events:none;filter:drop-shadow(0 8px 14px rgba(0,0,0,.5))}
+.stamp.land{animation:land .62s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes land{0%{transform:scale(3.4) rotate(-34deg);opacity:0}50%{transform:scale(.9) rotate(-13deg);opacity:1}68%{transform:scale(1.05) rotate(-13deg)}100%{transform:scale(1) rotate(-13deg);opacity:1}}
+.fs.thump{animation:thump .22s linear}
+@keyframes thump{0%{transform:translateY(0)}30%{transform:translateY(10px)}60%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+</style>
 <title>Apple Gathering Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600&family=Public+Sans:wght@400;600;700&display=swap">
@@ -127,13 +164,47 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
 </section>
 
 <section id="s-cal" hidden>
-  <div class="topbar"><span id="calCount">Calibration</span><span class="chip" id="calSrc"></span></div>
-  <div><h2 id="calTitle">Shake as hard as you can</h2><p class="muted" id="calMsg"></p></div>
-  <div class="gaugewrap">
-    <div class="gauge"><div class="fill" id="calFill"></div></div>
-    <div class="pad" id="calPad"><span id="calPadTxt">Get ready</span></div>
+  <div id="calFS" class="fs">
+    <div id="calGreen" class="fslayer"></div>
+    <div id="calBlue" class="fslayer"></div>
+    <div id="calWord" class="big" aria-live="assertive"></div>
+    <div id="calTag" class="caltag" hidden></div>
+    <div id="calIntro" class="intro">
+      <div class="introbody">
+        <p class="introeye">Calibration</p>
+        <h2 id="calIntroTitle">Shake Calibration</h2>
+        <p id="calIntroText" class="introtext"></p>
+        <div class="introchips"><span>3 rounds</span><span>5 seconds each</span><span>3 second rests</span></div>
+      </div>
+      <button id="btnCalBegin" type="button" class="calbtn">Begin</button>
+    </div>
+    <div id="calChecker" class="checker" hidden></div>
+    <svg id="calStamp" class="stamp" viewBox="0 0 400 400" style="display:none" role="img" aria-label="Calibration complete">
+      <defs>
+        <filter id="grunge" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.75" numOctaves="2" seed="7" result="n"/>
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -4 0 0 0 3.15" result="m"/>
+          <feComposite in="SourceGraphic" in2="m" operator="in"/>
+        </filter>
+        <path id="arcTop" d="M 60,200 a 140,140 0 1,1 280,0"/>
+        <path id="arcBot" d="M 52,200 a 148,148 0 0,0 296,0"/>
+      </defs>
+      <circle cx="200" cy="200" r="190" fill="#ffffff" fill-opacity=".94"/>
+      <g filter="url(#grunge)" fill="none" stroke="#18a34a" stroke-linecap="round">
+        <circle cx="200" cy="200" r="184" stroke-width="14"/>
+        <circle cx="200" cy="200" r="163" stroke-width="4"/>
+        <circle cx="200" cy="200" r="108" stroke-width="4"/>
+        <g fill="#18a34a" stroke="none" font-family="'Arial Black',Impact,sans-serif" font-weight="900" text-anchor="middle">
+          <text font-size="30" letter-spacing="14"><textPath href="#arcTop" startOffset="50%">★ ★ ★ ★ ★</textPath></text>
+          <text font-size="30" letter-spacing="14" dy="14"><textPath href="#arcBot" startOffset="50%">★ ★ ★ ★ ★</textPath></text>
+          <text x="200" y="192" font-size="34" textLength="206" lengthAdjust="spacingAndGlyphs">CALIBRATION</text>
+          <rect x="104" y="204" width="192" height="4"/>
+          <text x="200" y="252" font-size="46" textLength="196" lengthAdjust="spacingAndGlyphs">COMPLETE</text>
+        </g>
+      </g>
+    </svg>
+    <button id="btnCalDone" type="button" class="calbtn" hidden>Continue</button>
   </div>
-  <div class="bar"><i id="calBar"></i></div>
 </section>
 
 <section id="s-blockintro" hidden>
@@ -225,12 +296,14 @@ function onMotion(e){
   if(v!==null&&Input.source==='motion')pushSample(now(),v);
   else if(v!==null)Input.lastMotion=v;
 }
-function attachPad(el){
-  el.addEventListener('pointerdown',function(e){try{el.setPointerCapture(e.pointerId)}catch(_){}Input.pad.active=true;Input.pad.x=e.clientX;Input.pad.y=e.clientY;Input.pad.lx=e.clientX;Input.pad.ly=e.clientY;e.preventDefault()});
+function attachPad(el,guard){
+  el.addEventListener('pointerdown',function(e){if(guard&&!guard(e))return;try{el.setPointerCapture(e.pointerId)}catch(_){}Input.pad.active=true;Input.pad.x=e.clientX;Input.pad.y=e.clientY;Input.pad.lx=e.clientX;Input.pad.ly=e.clientY;e.preventDefault()});
   el.addEventListener('pointermove',function(e){if(Input.pad.active){Input.pad.x=e.clientX;Input.pad.y=e.clientY}});
   ['pointerup','pointercancel','lostpointercapture'].forEach(function(n){el.addEventListener(n,function(){Input.pad.active=false})});
 }
-['#calPad','#exPad'].forEach(function(s){attachPad($(s))});
+var calPadOn=false;
+attachPad($('#exPad'));
+attachPad($('#calFS'),function(e){return calPadOn&&!(e.target.closest&&e.target.closest('button'))});
 
 var motionListening=false;
 function checkMotion(){
@@ -346,41 +419,103 @@ function runExertion(cfg){
 
 /* ---------- calibration ---------- */
 var CAL=null;
+var CAL_TRIALS=3;                 /* 3 x 5 s, maximum = peak across the three */
+var CAL_REF={motion:20,pad:4000}; /* provisional full-screen scale before any peak is known (m/s^2, px/s) */
+var CAL_DEAD=0.14;                /* share of the scale treated as rest / hand drift */
+function calWord(text,cls,anim){
+  var w=$('#calWord');w.className='big '+cls;w.innerHTML='';
+  var sp=document.createElement('span');sp.textContent=text;w.appendChild(sp);
+  if(anim){void sp.offsetWidth;sp.classList.add(anim)}
+  return sp;
+}
+function calClear(){$('#calWord').innerHTML='';$('#calWord').className='big'}
+function calBg(mode){ /* 'black' | 'green' */
+  var g=$('#calGreen');g.style.transition='none';g.style.opacity=(mode==='green')?1:0;
+}
+function calRound(scale,idx){
+  return new Promise(function(resolve){
+    var t0=now(),last=t0,peak=0,series=[],lvl=0,shown=-1,windowMs=5000;
+    Input.buf.length=0;Input.pad.lx=null;
+    var blue=$('#calBlue');
+    function step(){
+      var t=now(),dt=Math.min(100*TS,t-last);last=t;
+      sampleInput(t,dt);
+      var A=ampNow(t);peak=Math.max(peak,A);series.push([Math.round(t-t0),A]);
+      var raw=clamp((A-CAL_DEAD*scale)/((1-CAL_DEAD)*scale),0,1);
+      lvl+=(raw-lvl)*0.4;
+      blue.style.transform='scaleY('+lvl.toFixed(3)+')';
+      var n=5-Math.floor((t-t0)/1000);
+      if(n!==shown&&n>=1){shown=n;calWord(String(n),'w-num','grow')}
+      if(t-t0>=windowMs){blue.style.transform='scaleY(0)';resolve({peak:peak,series:series,usedMs:Math.round(t-t0)});return}
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  });
+}
 async function calibrate(){
   show('cal');
-  $('#calSrc').textContent=Input.source==='motion'?'Phone motion':'Shake pad';
+  var padMode=Input.source!=='motion';
+  var fs=$('#calFS');
+  var tag=$('#calTag'),intro=$('#calIntro'),chk=$('#calChecker'),stamp=$('#calStamp'),done=$('#btnCalDone');
+  chk.hidden=true;stamp.style.display='none';stamp.classList.remove('land');done.hidden=true;tag.hidden=true;
+  calClear();calBg('black');$('#calBlue').style.transform='scaleY(0)';
+  var verb=padMode?'scribble on the screen with a finger':'shake your phone';
+  $('#calIntroTitle').textContent=padMode?'Scribble Calibration':'Shake Calibration';
+  $('#calIntroText').textContent='On the next screen you will be asked to '+verb+' as hard as possible for 5 seconds. After the timer is up you will be given a short break. There will be '+CAL_TRIALS+' × 5 second calibrations total. When you are ready, tap Begin.';
+  intro.hidden=false;
+  await click($('#btnCalBegin'));
+  intro.hidden=true;
+  var ref=padMode?CAL_REF.pad:CAL_REF.motion;
   var runs=[];
   while(true){
     runs=[];
-    for(var i=0;i<6;i++){
-      $('#calCount').textContent='Calibration '+(i+1)+' of 6';
-      $('#calTitle').textContent='Shake as hard as you can';
-      $('#calMsg').textContent=Input.source==='motion'?'Hold the phone and shake it hard for 5 seconds.':'Scribble back and forth on the pad as fast as you can for 5 seconds.';
-      $('#calPad').classList.remove('live');$('#calPadTxt').textContent='Get ready';
-      $('#calBar').style.width='0';$('#calFill').style.height='0';
-      await sleep(i===0?1800:1400);
-      $('#calPad').classList.add('live');$('#calPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';
-      var r=await runExertion({kind:'cal',Amax:1,windowMs:5000,fillEl:$('#calFill'),barEl:$('#calBar'),winEl:document.createElement('i'),lineEl:null,thr:null});
+    for(var i=0;i<CAL_TRIALS;i++){
+      var scale=ref;
+      if(runs.length)scale=Math.max(ref,0.9*Math.max.apply(null,runs.map(function(r){return r.peak})));
+      calBg('black');tag.hidden=false;tag.textContent='Round '+(i+1)+' of '+CAL_TRIALS;
+      calPadOn=false;
+      await sleep(i===0?500:350);
+      calWord('Ready','w-ready','grow');await sleep(850);
+      calWord('Set','w-set','grow');await sleep(850);
+      calWord('GO!','w-go','grow');await sleep(720);
+      var g=$('#calGreen');g.style.transition='opacity .45s ease-in';g.style.opacity=1;
+      calWord('GO!','w-go','flood');await sleep(500);
+      calClear();
+      calPadOn=true;
+      var r=await calRound(scale,i);
+      calPadOn=false;
       runs.push(r);
-      $('#calPad').classList.remove('live');$('#calPadTxt').textContent=i<5?'Rest':'Done';
-      if(i<5)await sleep(1800);
+      calClear();calBg('black');
+      if(i<CAL_TRIALS-1){
+        calWord('REST','w-rest','fade');
+        await sleep(3000);
+        calClear();
+      }
     }
-    var last3=runs.slice(3),Amax=Math.max.apply(null,last3.map(function(r){return r.peak}));
+    tag.hidden=true;
+    var Amax=Math.max.apply(null,runs.map(function(r){return r.peak}));
     var minOk=Input.inject!==null?1:(Input.source==='motion'?2:150);
     if(Amax<minOk){
-      $('#calTitle').textContent='That was too gentle to measure';
-      $('#calMsg').textContent='Shake harder and we will repeat the calibration.';
-      await sleep(2500);continue;
+      calWord('Too gentle to measure','w-rest','fade');
+      $('#calWord').firstChild.style.fontSize='min(11vw,8vh)';$('#calWord').firstChild.style.whiteSpace='normal';$('#calWord').firstChild.style.textAlign='center';
+      await sleep(2600);calClear();continue;
     }
-    var works=last3.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w});
-    var Wmax=Math.max.apply(null,works);
-    CAL={Amax:Amax,Wmax:Wmax,source:Input.source,peaks:runs.map(function(r){return r.peak}),
-         works:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w})};
+    var works=runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w});
+    CAL={Amax:Amax,Wmax:Math.max.apply(null,works),source:Input.source,peaks:runs.map(function(r){return r.peak}),works:works,trials:CAL_TRIALS};
     break;
   }
   SES.calibration=CAL;
-  $('#calTitle').textContent='Calibrated';$('#calMsg').textContent='Your maximum shake is now 100 percent. All effort levels are set from it.';
-  await sleep(1400);
+  /* finish: checkered flag, then the stamp lands */
+  calBg('black');
+  chk.hidden=false;chk.style.animation='none';void chk.offsetWidth;chk.style.animation='';
+  await sleep(750);
+  stamp.style.display='block';void stamp.getBoundingClientRect();stamp.classList.add('land');
+  await sleep(340);
+  fs.classList.remove('thump');void fs.offsetWidth;fs.classList.add('thump');
+  await sleep(500);
+  done.hidden=false;
+  await click(done);
+  fs.classList.remove('thump');chk.hidden=true;stamp.style.display='none';done.hidden=true;
 }
 
 /* ---------- blocks and trials ---------- */
