@@ -189,6 +189,7 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
       <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
       <label class="check"><input id="optTotal" type="checkbox" checked><span>Show running apple score</span></label>
       <label class="check"><input id="optLb" type="checkbox" checked><span>Leaderboard</span></label>
+      <div><label for="lbMetric">Leaderboard ranks by</label><select id="lbMetric"><option value="apples">Total apples</option><option value="rate">Apples per minute of effort</option></select></div>
       <div><label for="noEffShare">Accepted offers with no effort needed (%)</label><input id="noEffShare" type="number" min="0" max="50" value="25"></div>
       <label class="check"><input id="optGiveUp" type="checkbox"><span>Allow giving up after accepting (sunk-cost measure)</span></label>
       <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold (gauge resets below the line)</span></label>
@@ -325,7 +326,10 @@ var TS=1;
 var now=function(){return performance.now()*TS};
 var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms/TS)})};
 var SCREENS=['setup','mood','cal','blockintro','offer','exert','feedback','results'];
-function show(id){SCREENS.forEach(function(s){$('#s-'+s).hidden=(s!==id)});window.scrollTo(0,0)}
+var SCRLOG=[],SCRCUR=null;
+function scrEnd(t){if(SCRCUR){SCRLOG.push([SCRCUR.id,Math.round(SCRCUR.t0),Math.round(t-SCRCUR.t0)]);SCRCUR=null}}
+function show(id){var t=performance.now();scrEnd(t);SCRCUR={id:id,t0:t};SCREENS.forEach(function(s){$('#s-'+s).hidden=(s!==id)});window.scrollTo(0,0)}
+function scrTotals(){var o={};SCRLOG.forEach(function(e){o[e[0]]=(o[e[0]]||0)+e[2]});return o}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
 function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
 function mean(a){return a.length?a.reduce(function(s,x){return s+x},0)/a.length:null}
@@ -430,7 +434,7 @@ function newSession(){
     userAgent:navigator.userAgent,
     screen:[window.innerWidth,window.innerHeight,window.devicePixelRatio||1],
     inputSource:Input.source,motionOK:Input.motionOK,
-    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,leaderboard:$('#optLb').checked,strict:$('#optStrict').checked,giveUp:$('#optGiveUp').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:clamp(parseInt($('#noEffShare').value,10)||0,0,50)/100},
+    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,leaderboard:$('#optLb').checked,lbMetric:$('#lbMetric').value,strict:$('#optStrict').checked,giveUp:$('#optGiveUp').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:clamp(parseInt($('#noEffShare').value,10)||0,0,50)/100},
     mood:null,energy:null,calibration:null,blocks:[],endedAt:null,totalApples:0
   };
   return SES;
@@ -688,7 +692,16 @@ function buildOffers(reps,share){
   idx.slice(0,nNo).forEach(function(i){all[i].noEffort=true});
   return all;
 }
-function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples+(st.leaderboard?' \u00b7 #'+lbRank(SES.totalApples):'')})}
+function sesScore(){
+  var ap=0,ms=0;
+  SES.blocks.forEach(function(b){b.trials.forEach(function(t){if(t.executed){ms+=t.usedMs||0;if(t.success)ap+=t.won}})});
+  return{effApples:ap,effortMs:ms,rate:ms>0?ap/(ms/60000):0};
+}
+function lbMetric(){return SES&&SES.settings.lbMetric==='rate'?'rate':'apples'}
+function lbVal(e){return lbMetric()==='rate'?(e.rate||0):e.apples}
+function lbFmt(v){return lbMetric()==='rate'?v.toFixed(1)+'/min':String(v)}
+function curEntry(){var sc=sesScore();return{apples:SES.totalApples,rate:sc.rate}}
+function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples+(st.leaderboard?' \u00b7 #'+lbRank(curEntry()):'')})}
 
 async function practiceBlock(mode){
   for(var i=0;i<4;i++){
@@ -714,7 +727,7 @@ async function runBlock(mode,bi,nBlocks,reps){
   var offers=buildOffers(reps,SES.settings.noEffortShare),blk={idx:bi,mode:mode,startedAt:new Date().toISOString(),trials:[]};
   for(var n=0;n<offers.length;n++){
     var o=offers[n],spec=effortSpec(mode,o.ei),reward=REWARDS[o.ri];
-    show('offer');setTotal();
+    var tTrial=performance.now();show('offer');setTotal();
     $('#offProg').textContent=info.name+' · offer '+(n+1)+' of '+offers.length;
     $('#offTree').innerHTML=treeSVG(reward,spec.vis.h,spec.vis.secs);
     $('#offHint').textContent=tx(spec.kind==='work'?'Accept, then {v} to fill the bar with total {ing} work before time runs out. The harder you {v}, the more the tree rattles.':'Accept, then {v} until the tree rattles past the orange line, and hold it there while the countdown runs down. The apples fall when you succeed.');
@@ -733,7 +746,7 @@ async function runBlock(mode,bi,nBlocks,reps){
         rec.won=reward;SES.totalApples+=reward;
         $('#fbText').textContent=tx('No {ing} needed. +')+reward+' apples';$('#fbSub').textContent='';show('feedback');await sleep(1100);
       }else{
-        var r=await exertScreen(spec,reward,info.name+' · '+spec.txt.join(' · '));
+        var tEx=performance.now();var r=await exertScreen(spec,reward,info.name+' · '+spec.txt.join(' · '));rec.exScreenMs=Math.round(performance.now()-tEx);
         if(r.success)await treeFall();else await sleep(450);
         rec.executed=true;rec.gaveUp=!!r.aborted;rec.progAtEnd=Math.round(r.prog*1000)/1000;rec.success=r.success;rec.peakNorm=Math.round(r.peakNorm*1000)/1000;rec.timeAboveMs=r.timeAboveMs;rec.workDone=Math.round(r.work*1000)/1000;rec.usedMs=r.usedMs;rec.trace=r.trace;
         if(r.success){rec.won=reward;SES.totalApples+=reward;$('#fbText').textContent='+'+reward+' apples';$('#fbSub').textContent=''}
@@ -744,6 +757,7 @@ async function runBlock(mode,bi,nBlocks,reps){
     }else{
       $('#fbText').textContent='Skipped';$('#fbSub').textContent='';show('feedback');await sleep(350);
     }
+    rec.trialMs=Math.round(performance.now()-tTrial);
     blk.trials.push(rec);
   }
   blk.endedAt=new Date().toISOString();SES.blocks.push(blk);
@@ -754,17 +768,17 @@ async function runBlock(mode,bi,nBlocks,reps){
 /* ---------- leaderboard (this device only) ---------- */
 function lbLoad(){try{return JSON.parse(localStorage.getItem('agt_lb')||'[]')}catch(e){return []}}
 function lbSave(a){try{localStorage.setItem('agt_lb',JSON.stringify(a))}catch(e){}}
-function lbRank(total){return 1+lbLoad().filter(function(e){return e.apples>total}).length}
+function lbRank(cur){return 1+lbLoad().filter(function(e){return lbVal(e)>lbVal(cur)}).length}
 function renderLb(){
   var host=$('#resLb');host.innerHTML='';
   if(!SES.settings.leaderboard){host.hidden=true;return}
   host.hidden=false;
   var L=lbLoad(),mine=SES.sid;
-  var top=L.slice().sort(function(a,b){return b.apples-a.apples}).slice(0,10);
-  var h='<h3>Leaderboard</h3><p class="small muted">Apples earned per session, best first. Stored on this device only.</p><ol class="lb">';
-  top.forEach(function(e,i){h+='<li class="'+(e.sid===mine?'me':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+String(e.pid).replace(/[<>&]/g,'')+(e.sid===mine?' (this run)':'')+'</span><b>'+e.apples+'</b></li>'});
+  var top=L.slice().sort(function(a,b){return lbVal(b)-lbVal(a)}).slice(0,10);
+  var h='<h3>Leaderboard</h3><p class="small muted">'+(lbMetric()==='rate'?'Apples won per minute spent exerting effort (trees with no effort needed are not counted)':'Apples earned per session')+', best first. Stored on this device only.</p><ol class="lb">';
+  top.forEach(function(e,i){h+='<li class="'+(e.sid===mine?'me':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+String(e.pid).replace(/[<>&]/g,'')+(e.sid===mine?' (this run)':'')+'</span><b>'+lbFmt(lbVal(e))+'</b></li>'});
   h+='</ol>';
-  if(!top.some(function(e){return e.sid===mine})){var me=L.filter(function(e){return e.sid===mine})[0];if(me)h+='<p class="small">This run: <b>'+me.apples+'</b> apples, rank '+(1+L.filter(function(e){return e.apples>me.apples}).length)+' of '+L.length+'</p>'}
+  if(!top.some(function(e){return e.sid===mine})){var me=L.filter(function(e){return e.sid===mine})[0];if(me)h+='<p class="small">This run: <b>'+lbFmt(lbVal(me))+'</b>, rank '+lbRank(me)+' of '+L.length+'</p>'}
   h+='<button id="btnLbClear" class="secondary" type="button">Clear leaderboard</button>';
   host.innerHTML=h;
   $('#btnLbClear').addEventListener('click',function(){lbSave([]);renderLb()});
@@ -850,9 +864,9 @@ $('#btnMoodNext').addEventListener('click',async function(){
   var mode=SES.settings.mode,order=mode==='compare'?shuffle(['amp','dur','work','fac']):[mode],reps=SES.settings.reps;
   SES.blockOrder=order;
   for(var i=0;i<order.length;i++)await runBlock(order[i],i,order.length,reps);
-  SES.endedAt=new Date().toISOString();
+  SES.endedAt=new Date().toISOString();scrEnd(performance.now());SES.score=sesScore();SES.screenTimeMs=scrTotals();SES.screenLog=SCRLOG.slice();
   await dbSet('agt_sessions/'+SES.sid,clean(SES));
-  if(SES.settings.leaderboard){var L=lbLoad();L.push({sid:SES.sid,pid:SES.pid,apples:SES.totalApples,mode:SES.settings.mode,when:SES.endedAt});lbSave(L)}
+  if(SES.settings.leaderboard){var L=lbLoad();var sc=sesScore();L.push({sid:SES.sid,pid:SES.pid,apples:SES.totalApples,rate:sc.rate,effortMs:sc.effortMs,mode:SES.settings.mode,when:SES.endedAt});lbSave(L)}
   renderResults();renderLb();show('results');
 });
 window.__agt={setInject:function(v){Input.inject=v},setTS:function(v){TS=v},session:function(){return SES},input:Input};
