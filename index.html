@@ -73,6 +73,15 @@
 .bkL{position:absolute;height:auto;pointer-events:none;overflow:visible}
 .exfx{position:absolute;inset:0;z-index:4;pointer-events:none}
 .fxa{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7b62,#d9382b 60%);}
+.setuphead h1{font-size:clamp(34px,10vw,48px)}
+.adv{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:0}
+.adv>summary{cursor:pointer;padding:14px 16px;font-weight:700;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.adv>summary::-webkit-details-marker{display:none}
+.adv>summary::after{content:"\25BE";color:var(--muted)}
+.adv[open]>summary::after{content:"\25B4"}
+.advbody{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px}
+.bigstart{min-height:68px;font-size:22px;border-radius:999px}
+.startnote{text-align:center;font-size:15px;color:var(--muted);min-height:22px}
 </style>
 <title>Apple Gathering Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -154,41 +163,39 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
 <main id="app">
 
 <section id="s-setup">
-  <div><p class="eyebrow">CoNECt Lab · BiAffect pilot</p><h1>Apple Gathering Prototype</h1></div>
-  <p class="muted">A phone version of the Apple Gathering Task with the grip device replaced by shaking. Numbers follow the published lab version (rewards 3, 6, 9, 12 apples; effort 20 to 80 percent of your own maximum). Everything is adjustable later.</p>
+  <div class="setuphead"><p class="eyebrow">CoNECt Lab · BiAffect pilot</p><h1>Apple Gathering</h1></div>
 
   <div class="card">
-    <h3>Input</h3>
-    <p class="small muted">Phone motion cannot be read from inside a published page in most viewers. The check below tells us. If it fails, the shake pad measures finger speed instead, which lets us test the task logic and metrics but not real arm effort.</p>
-    <div class="row"><button id="btnMotion" class="secondary" type="button">Check phone motion sensor</button></div>
-    <div id="motionStatus" class="status">Motion sensor not checked yet. Using the shake pad.</div>
-    <div>
-      <label for="src">Input source</label>
-      <select id="src"><option value="pad">Shake pad (finger speed)</option><option value="motion" disabled>Phone motion (run the check first)</option></select>
+    <div><label for="pid">Name</label><input id="pid" type="text" placeholder="Your name" autocomplete="off" autocapitalize="words"></div>
+  </div>
+
+  <details class="adv">
+    <summary>Advanced options</summary>
+    <div class="advbody">
+      <div class="row"><button id="btnMotion" class="secondary" type="button">Check phone motion sensor</button></div>
+      <div id="motionStatus" class="status">Motion sensor not checked yet.</div>
+      <div><label for="src">Input source</label>
+        <select id="src"><option value="pad">Scribble on screen</option><option value="motion" disabled>Phone motion (run the check first)</option></select></div>
+      <div><label for="mode">Effort metric</label>
+        <select id="mode">
+          <option value="compare" selected>All four (4 blocks of 16 offers)</option>
+          <option value="amp">Amplitude</option>
+          <option value="dur">Duration</option>
+          <option value="work">Combined work</option>
+          <option value="fac">Separate strength and time</option>
+        </select></div>
+      <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
+      <label class="check"><input id="optTotal" type="checkbox" checked><span>Show running apple score</span></label>
+      <label class="check"><input id="optLb" type="checkbox" checked><span>Leaderboard</span></label>
+      <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold (gauge resets below the line)</span></label>
+      <label class="check"><input id="optPractice" type="checkbox" checked><span>Practice before each block</span></label>
+      <div><label for="fixedAmp">Fixed strength, duration metric (% of maximum)</label><input id="fixedAmp" type="number" min="30" max="70" value="50"></div>
+      <div id="saveStatus" class="status small">Data saving: checking.</div>
     </div>
-  </div>
+  </details>
 
-  <div class="card">
-    <h3>Session</h3>
-    <div><label for="pid">Participant code</label><input id="pid" type="text" value="MS-01" autocomplete="off" autocapitalize="off"></div>
-    <div><label for="mode">Effort metric</label>
-      <select id="mode">
-        <option value="compare" selected>Compare all four (4 blocks of 16 offers)</option>
-        <option value="amp">Amplitude: shake strength sets the effort</option>
-        <option value="dur">Duration: shaking time sets the effort</option>
-        <option value="work">Combined: total shaking work sets the effort</option>
-        <option value="fac">Separate: strength and time vary independently</option>
-      </select></div>
-    <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
-    <label class="check"><input id="optTotal" type="checkbox"><span>Show a running apple total (open stakes question)</span></label>
-    <label class="check"><input id="optLb" type="checkbox" checked><span>Leaderboard: rank sessions by apples earned (stored on this device)</span></label>
-    <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold: the gauge resets if you drop below the line</span></label>
-    <label class="check"><input id="optPractice" type="checkbox" checked><span>Practice the four effort levels before each block</span></label>
-    <div><label for="fixedAmp">Fixed strength in the duration metric (percent of maximum)</label><input id="fixedAmp" type="number" min="30" max="70" value="50"></div>
-  </div>
-
-  <button id="btnStart" class="accent" type="button">Start</button>
-  <div id="saveStatus" class="status small">Data saving: checking.</div>
+  <button id="btnStart" class="accent bigstart" type="button">Start with phone motion</button>
+  <p id="startNote" class="startnote" aria-live="polite"></p>
 </section>
 
 <section id="s-mood" hidden>
@@ -408,7 +415,7 @@ function newSession(){
   SES={
     version:'agt-shake-proto-0.1',
     sid:'s'+Date.now().toString(36)+Math.floor(Math.random()*1296).toString(36),
-    pid:$('#pid').value.trim()||'anon',
+    pid:$('#pid').value.trim()||'Player',
     startedAt:new Date().toISOString(),
     tz:(Intl.DateTimeFormat().resolvedOptions().timeZone)||'',
     tzOffsetMin:new Date().getTimezoneOffset(),
@@ -689,7 +696,7 @@ function execCfg(spec){
 async function runBlock(mode,bi,nBlocks,reps){
   var info=MODES[mode];
   show('blockintro');
-  $('#biCount').textContent='Block '+(bi+1)+' of '+nBlocks;$('#biSrc').textContent=Input.source==='motion'?'Phone motion':'Shake pad';
+  $('#biCount').textContent='Block '+(bi+1)+' of '+nBlocks;$('#biSrc').textContent=Input.source==='motion'?'Phone motion':'Scribble';
   $('#biEyebrow').textContent='Effort metric';$('#biTitle').textContent=info.name;$('#biText').textContent=info.desc;
   $('#biSub').textContent='Each offer shows apples and an effort level. Accept to try, or skip to see the next tree. Skipping is instant.';
   await click($('#btnBlockGo'));
@@ -802,7 +809,17 @@ $('#btnAgain').addEventListener('click',function(){location.reload()});
 $('#mode').addEventListener('change',function(){$('#repsWrap').hidden=(this.value==='compare')});
 $('#mood').addEventListener('input',function(){$('#moodV').textContent=this.value});
 $('#energy').addEventListener('input',function(){$('#energyV').textContent=this.value});
-$('#btnStart').addEventListener('click',function(){newSession();show('mood')});
+$('#btnStart').addEventListener('click',async function(){
+  var b=this,note=$('#startNote');
+  if(!Input.motionOK&&Input.inject===null){
+    b.disabled=true;note.textContent='Checking the motion sensor. Allow access if asked, and move your phone.';
+    try{await checkMotion()}catch(e){}
+    if(!Input.motionOK){note.textContent='Motion not available. Using scribble instead.';await sleep(1400)}
+    b.disabled=false;
+  }
+  note.textContent='';
+  newSession();show('mood');
+});
 $('#btnMoodNext').addEventListener('click',async function(){
   SES.mood=parseInt($('#mood').value,10);SES.energy=parseInt($('#energy').value,10);
   await calibrate();
