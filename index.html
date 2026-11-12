@@ -18,6 +18,7 @@
 .big>span.fade{animation:fadein .35s ease-out forwards}
 @keyframes grow{0%{transform:scale(.06);opacity:0}15%{opacity:1}100%{transform:scale(1);opacity:1}}
 @keyframes flood{0%{transform:scale(1);opacity:1}100%{transform:scale(34);opacity:1}}
+@keyframes fadeout{from{opacity:1}to{opacity:0}}
 @keyframes fadein{from{opacity:0}to{opacity:1}}
 .caltag{position:absolute;top:max(14px,env(safe-area-inset-top,0px));left:0;right:0;text-align:center;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75);pointer-events:none}
 .intro{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:24px;padding:max(28px,env(safe-area-inset-top,0px)) max(24px,env(safe-area-inset-right,0px)) max(32px,env(safe-area-inset-bottom,0px)) max(24px,env(safe-area-inset-left,0px));background:radial-gradient(120% 80% at 50% 0%,#12263f 0%,#070b12 62%,#000 100%);text-align:center}
@@ -36,6 +37,42 @@
 @keyframes land{0%{transform:scale(3.4) rotate(-34deg);opacity:0}50%{transform:scale(.9) rotate(-13deg);opacity:1}68%{transform:scale(1.05) rotate(-13deg)}100%{transform:scale(1) rotate(-13deg);opacity:1}}
 .fs.thump{animation:thump .22s linear}
 @keyframes thump{0%{transform:translateY(0)}30%{transform:translateY(10px)}60%{transform:translateY(-4px)}100%{transform:translateY(0)}}
+
+/* tree exertion screen */
+.offhint{font-size:15px;color:var(--muted);text-align:center;text-wrap:balance}
+.ex{background:linear-gradient(#9fd4f0 0%,#d9f0f7 55%,#eaf6df 100%);color:#16324a}
+.ex .ground{position:absolute;left:0;right:0;bottom:0;height:13%;background:linear-gradient(#7fb85a,#5c9440)}
+.extree{position:absolute;left:0;right:0;top:6%;bottom:9%;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.extree svg{width:min(104vw,78vh);height:auto;max-height:100%;overflow:visible}
+.gauge.exg{overflow:visible;position:absolute;left:max(10px,env(safe-area-inset-left,0px));top:max(52px,calc(env(safe-area-inset-top,0px) + 44px));bottom:56px;width:30px;height:auto;border-radius:15px;background:rgba(22,50,74,.18);z-index:3}
+.gauge.exg .fill{background:#1e6bff;border-radius:15px}
+.gauge.exg .fill.over{background:#1fbf5b}
+.gauge.exg .line{height:6px;left:-5px;right:-5px;background:#ff8a2b;border-radius:3px;box-shadow:0 0 0 2px #fff}
+.extop{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 max(14px,env(safe-area-inset-right,0px)) 0 max(14px,env(safe-area-inset-left,0px));font-size:14px;font-weight:700;color:#16324a;pointer-events:none}
+.extimer{position:absolute;top:max(36px,calc(env(safe-area-inset-top,0px) + 30px));left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));height:6px;background:rgba(22,50,74,.15)}
+.extimer>i{background:#16324a}
+.exbar{position:absolute;left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));height:22px;border-radius:11px;background:rgba(22,50,74,.2);z-index:3}
+.exbar>i{background:#ff8a2b}
+.expad{position:absolute;inset:0;z-index:2;touch-action:none}
+#exWord{z-index:4;font-size:1px}
+#exWord.w-go>span{font-size:min(22vw,20vh);color:#fff;text-shadow:0 4px 0 rgba(22,50,74,.55)}
+.lb{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.lb li{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--bg);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.lb li.me{border-color:var(--accent);background:var(--surface);font-weight:700}
+.lb .rk{width:24px;color:var(--muted);font-weight:700}.lb .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.introsub{font-size:clamp(18px,4.8vw,22px);line-height:1.4;color:#aeb9c8}
+.intro.offer{justify-content:flex-start;overflow-y:auto}
+.intro.offer #offTree{width:100%;display:flex;justify-content:center}
+.intro .tree{max-width:min(74vw,34vh)}
+.intro .effort-line .chip{font-size:clamp(20px,5.6vw,26px);padding:6px 18px;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff}
+.intro .choices{width:100%;max-width:520px;margin-top:auto}
+.intro .choices button{min-height:72px;font-size:24px;border-radius:999px}
+.intro button.secondary{color:#fff;border-color:rgba(255,255,255,.35)}
+.intro .offer-hint,.intro.offer .introtext{font-size:clamp(19px,5vw,24px)}
+.intro .chip,.introchips span{color:#aeb9c8}
+.intro [hidden]{display:none}
+.intro .tree text{fill:#fff!important}
+.intro .tree ellipse{fill:#5ea14f!important}
 </style>
 <title>Apple Gathering Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -144,7 +181,7 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
       </select></div>
     <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
     <label class="check"><input id="optTotal" type="checkbox"><span>Show a running apple total (open stakes question)</span></label>
-    <label class="check"><input id="optMotiv" type="checkbox"><span>Ask for a motivation rating on every offer (extended AGT)</span></label>
+    <label class="check"><input id="optLb" type="checkbox" checked><span>Leaderboard: rank sessions by apples earned (stored on this device)</span></label>
     <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold: the gauge resets if you drop below the line</span></label>
     <label class="check"><input id="optPractice" type="checkbox" checked><span>Practice the four effort levels before each block</span></label>
     <div><label for="fixedAmp">Fixed strength in the duration metric (percent of maximum)</label><input id="fixedAmp" type="number" min="30" max="70" value="50"></div>
@@ -208,29 +245,39 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
 </section>
 
 <section id="s-blockintro" hidden>
-  <div class="topbar"><span id="biCount"></span><span class="chip" id="biSrc"></span></div>
-  <div><p class="eyebrow" id="biEyebrow"></p><h2 id="biTitle"></h2></div>
-  <div class="card"><p id="biText"></p><p class="small muted" id="biSub"></p></div>
-  <button id="btnBlockGo" type="button">Go</button>
+  <div class="fs"><div class="intro">
+    <div class="introbody">
+      <p class="introeye" id="biEyebrow"></p>
+      <h2 id="biTitle"></h2>
+      <p class="introtext" id="biText"></p>
+      <p class="introsub" id="biSub"></p>
+      <div class="introchips"><span id="biCount"></span><span id="biSrc"></span></div>
+    </div>
+    <button id="btnBlockGo" type="button" class="calbtn">Begin</button>
+  </div></div>
 </section>
 
 <section id="s-offer" hidden>
-  <div class="topbar"><span id="offProg"></span><span class="chip" id="offTotal" hidden></span></div>
-  <div id="offTree"></div>
-  <div class="effort-line" id="offEffort"></div>
-  <div id="motivWrap" hidden class="card"><label for="motiv">How motivated are you to take this offer? <span id="motivV">50</span></label><input id="motiv" type="range" min="0" max="100" value="50"><div class="row small muted" style="justify-content:space-between"><span>Not at all</span><span>Very</span></div></div>
-  <div class="choices"><button id="btnSkip" class="secondary" type="button">Skip</button><button id="btnAccept" class="accent" type="button">Accept</button></div>
+  <div class="fs"><div class="intro offer">
+    <div class="introchips"><span id="offProg"></span><span id="offTotal" hidden></span></div>
+    <div id="offTree"></div>
+    <div class="effort-line" id="offEffort"></div>
+    <p class="introtext" id="offHint"></p>
+    <div class="choices"><button id="btnSkip" class="secondary" type="button">Skip</button><button id="btnAccept" class="accent" type="button">Accept</button></div>
+  </div></div>
 </section>
 
 <section id="s-exert" hidden>
-  <div class="topbar"><span id="exInfo"></span><span class="chip" id="exTotal" hidden></span></div>
-  <div class="bar thin"><i id="exWindow"></i></div>
-  <div class="gaugewrap">
-    <div class="gauge"><div class="fill" id="exFill"></div><div class="line" id="exLine"></div></div>
-    <div class="pad" id="exPad"><span id="exPadTxt">Shake</span></div>
+  <div id="exFS" class="fs ex">
+    <div class="ground"></div>
+    <div id="exTree" class="extree"></div>
+    <div class="gauge exg"><div class="fill" id="exFill"></div><div class="line" id="exLine"></div></div>
+    <div class="extop"><span id="exInfo"></span><span class="chip" id="exTotal" hidden></span></div>
+    <div class="bar thin extimer"><i id="exWindow"></i></div>
+    <div class="bar exbar"><i id="exBar"></i></div>
+    <div id="exWord" class="big w-go"></div>
+    <div id="exPad" class="expad"></div>
   </div>
-  <div class="bar"><i id="exBar"></i></div>
-  <p class="small muted" id="exHint"></p>
 </section>
 
 <section id="s-feedback" hidden><div class="bigfb" id="fbText"></div><p class="muted" id="fbSub" style="text-align:center"></p></section>
@@ -240,6 +287,7 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
   <div class="card"><p id="saveMsg"></p>
     <div class="row"><button id="btnDl" class="secondary" type="button">Save a copy</button><button id="btnCopy" class="secondary" type="button">Copy data</button></div>
     <p class="small muted">Session ID <b id="sidOut"></b></p></div>
+  <div id="resLb" class="card" hidden></div>
   <div id="resBlocks" style="display:flex;flex-direction:column;gap:16px"></div>
   <button id="btnAgain" type="button" class="secondary">Run another session</button>
 </section>
@@ -357,7 +405,7 @@ function newSession(){
     userAgent:navigator.userAgent,
     screen:[window.innerWidth,window.innerHeight,window.devicePixelRatio||1],
     inputSource:Input.source,motionOK:Input.motionOK,
-    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,motivation:$('#optMotiv').checked,strict:$('#optStrict').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:0.25},
+    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,leaderboard:$('#optLb').checked,strict:$('#optStrict').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:0.25},
     mood:null,energy:null,calibration:null,blocks:[],endedAt:null,totalApples:0
   };
   return SES;
@@ -387,6 +435,53 @@ function treeSVG(n,fill,secs){
    +'<rect x="139" y="'+(232+th-h)+'" width="42" height="'+h+'" rx="5" fill="var(--teal)"/>'+ticks+clock+'</svg>';
 }
 
+
+function treeBig(n){
+  var a='';for(var i=0;i<n;i++){var p=APPLES[i];a+='<g class="apple" data-y="'+p[1]+'"><circle cx="'+p[0]+'" cy="'+p[1]+'" r="16" fill="#d9382b"/><circle cx="'+(p[0]-5)+'" cy="'+(p[1]-5)+'" r="4.5" fill="#fff" opacity=".4"/></g>'}
+  return '<svg viewBox="0 0 320 340" aria-hidden="true"><g id="treeG"><rect x="136" y="200" width="48" height="130" rx="8" fill="#8a5a34"/><ellipse cx="160" cy="115" rx="145" ry="108" fill="#5ea14f"/><ellipse cx="120" cy="90" rx="70" ry="48" fill="#6fb35d" opacity=".7"/>'+a+'</g></svg>';
+}
+function treeShake(k,t){
+  var g=document.getElementById('treeG');if(!g)return;
+  if(k<0.02){g.removeAttribute('transform');return}
+  var ang=(Math.sin(t/38)*6.5+Math.sin(t/17)*2.2)*k,tx=Math.sin(t/29)*9*k;
+  g.setAttribute('transform','translate('+tx.toFixed(2)+' 0) rotate('+ang.toFixed(2)+' 160 330)');
+}
+async function treeFall(){
+  var g=document.getElementById('treeG');if(g)g.removeAttribute('transform');
+  var ap=[].slice.call(document.querySelectorAll('#exTree .apple'));
+  ap.forEach(function(el,i){
+    var d=318-parseFloat(el.getAttribute('data-y'))+(Math.random()*8);
+    el.animate([
+      {transform:'translateY(0px)',offset:0,easing:'cubic-bezier(.5,0,.9,.5)'},
+      {transform:'translateY('+d+'px)',offset:.55,easing:'ease-out'},
+      {transform:'translateY('+(d-26)+'px)',offset:.7,easing:'ease-in'},
+      {transform:'translateY('+d+'px)',offset:.84,easing:'ease-out'},
+      {transform:'translateY('+(d-7)+'px)',offset:.92,easing:'ease-in'},
+      {transform:'translateY('+d+'px)',offset:1}
+    ],{duration:1100,delay:i*(Math.min(70,500/ap.length)/1),fill:'forwards'});
+  });
+  await sleep(1100+Math.min(900,ap.length*70)+250);
+}
+function exFrame(cfg){
+  var ref=cfg.kind==='time'?cfg.ampT:0.7;
+  return function(a,prog,t){
+    var r=clamp(a/ref,0,1.3),k=Math.pow(Math.min(r,1),1.5)+(r>1?0.12:0);
+    treeShake(Math.min(k,1.1),t);
+  };
+}
+async function exertScreen(spec,reward,infoText,showWord){
+  show('exert');setTotal();
+  $('#exTree').innerHTML=treeBig(reward);
+  $('#exInfo').textContent=infoText;
+  var w=$('#exWord');w.innerHTML='';
+  var sp=document.createElement('span');sp.textContent=Input.source==='motion'?'SHAKE!':'SCRIBBLE!';w.appendChild(sp);
+  void sp.offsetWidth;sp.style.animation='grow .5s cubic-bezier(.18,.9,.25,1) forwards, fadeout .5s ease-in .55s forwards';
+  var cfg=execCfg(spec);cfg.onFrame=exFrame(cfg);
+  var r=await runExertion(cfg);
+  var g=document.getElementById('treeG');if(g)g.removeAttribute('transform');
+  return r;
+}
+
 /* ---------- exertion engine ---------- */
 function runExertion(cfg){
   return new Promise(function(resolve){
@@ -407,6 +502,7 @@ function runExertion(cfg){
       if(cfg.kind==='cal'){prog=(t-t0)/cfg.windowMs;series.push([Math.round(t-t0),A])}
       fill.style.height=(clamp(a,0,1.2)/1.2*100)+'%';fill.classList.toggle('over',cfg.thr!=null&&a>=cfg.thr);
       bar.style.width=(clamp(prog,0,1)*100)+'%';win.style.width=(clamp((t-t0)/cfg.windowMs,0,1)*100)+'%';
+      if(cfg.onFrame)cfg.onFrame(a,prog,t);
       if(t>=nextTr){trace.push(Math.round(clamp(a,0,3)*100));nextTr+=100}
       if(cfg.kind!=='cal'&&prog>=1){ok=true;done=true}
       if(t-t0>=cfg.windowMs)done=true;
@@ -527,18 +623,13 @@ function buildOffers(reps){
   idx.slice(0,nNo).forEach(function(i){all[i].noEffort=true});
   return all;
 }
-function setTotal(){var on=SES.settings.showTotal;['#offTotal','#exTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples})}
+function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTotal','#exTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples+(st.leaderboard?' \u00b7 #'+lbRank(SES.totalApples):'')})}
 
 async function practiceBlock(mode){
   for(var i=0;i<4;i++){
     var spec=effortSpec(mode,i);
-    show('exert');setTotal();$('#exTotal').hidden=true;
-    $('#exInfo').textContent='Practice '+(i+1)+' of 4 · '+spec.txt.join(' · ');
-    $('#exHint').textContent='No apples at stake. This is what this effort level feels like.';
-    $('#exPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';
-    $('#exPad').classList.add('live');
-    await runExertion(execCfg(spec));
-    $('#exPad').classList.remove('live');
+    await exertScreen(spec,6,'Practice '+(i+1)+' of 4 · '+spec.txt.join(' · '));
+    $('#exTotal').hidden=true;
     $('#fbText').textContent='Practice done';$('#fbSub').textContent='';show('feedback');await sleep(900);
   }
 }
@@ -562,9 +653,8 @@ async function runBlock(mode,bi,nBlocks,reps){
     show('offer');setTotal();
     $('#offProg').textContent=info.name+' · offer '+(n+1)+' of '+offers.length;
     $('#offTree').innerHTML=treeSVG(reward,spec.vis.h,spec.vis.secs);
+    $('#offHint').textContent=spec.kind==='work'?'Accept, then shake to fill the bar with total shaking work before time runs out. The harder you shake, the more the tree rattles.':'Accept, then shake until the tree rattles past the orange line, and hold it there until the bar fills. The apples fall when you succeed.';
     $('#offEffort').innerHTML=spec.txt.map(function(t){return '<span class="chip">'+t+'</span>'}).join('');
-    var mw=$('#motivWrap');mw.hidden=!SES.settings.motivation;$('#motiv').value=50;$('#motivV').textContent='50';var touched=false;
-    $('#motiv').oninput=function(){touched=true;$('#motivV').textContent=this.value};
     var onset=now(),wall=new Date(),choice=await new Promise(function(res){
       function a(){cl();res('accept')}function s(){cl();res('skip')}
       function cl(){$('#btnAccept').removeEventListener('click',a);$('#btnSkip').removeEventListener('click',s)}
@@ -572,19 +662,15 @@ async function runBlock(mode,bi,nBlocks,reps){
     });
     var rt=Math.round(now()-onset);
     var rec={n:n+1,reward:reward,rewardIdx:o.ri,effortIdx:o.ei,effortPct:spec.pct,ampTarget:spec.ampT!==undefined?spec.ampT:null,durTarget:spec.durT!==undefined?spec.durT:null,workTarget:spec.workT!==undefined?spec.workT:null,
-      noEffort:!!o.noEffort,motivation:SES.settings.motivation?{value:parseInt($('#motiv').value,10),touched:touched}:null,
+      noEffort:!!o.noEffort,
       onsetAt:wall.toISOString(),localHour:wall.getHours()+wall.getMinutes()/60,rtMs:rt,choice:choice,executed:false,success:null,won:0};
     if(choice==='accept'){
       if(o.noEffort){
         rec.won=reward;SES.totalApples+=reward;
         $('#fbText').textContent='No squeeze needed. +'+reward+' apples';$('#fbSub').textContent='';show('feedback');await sleep(1100);
       }else{
-        show('exert');setTotal();
-        $('#exInfo').textContent=info.name+' · '+spec.txt.join(' · ');
-        $('#exHint').textContent=spec.kind==='work'?'Fill the bar with total shaking work before the time runs out.':'Stay above the orange line until the bar fills.';
-        $('#exPadTxt').textContent=Input.source==='motion'?'Shake!':'Scribble!';$('#exPad').classList.add('live');
-        var r=await runExertion(execCfg(spec));
-        $('#exPad').classList.remove('live');
+        var r=await exertScreen(spec,reward,info.name+' · '+spec.txt.join(' · '));
+        if(r.success)await treeFall();else await sleep(450);
         rec.executed=true;rec.success=r.success;rec.peakNorm=Math.round(r.peakNorm*1000)/1000;rec.timeAboveMs=r.timeAboveMs;rec.workDone=Math.round(r.work*1000)/1000;rec.usedMs=r.usedMs;rec.trace=r.trace;
         if(r.success){rec.won=reward;SES.totalApples+=reward;$('#fbText').textContent='+'+reward+' apples';$('#fbSub').textContent=''}
         else{$('#fbText').textContent='Not enough this time';$('#fbSub').textContent='No apples for this tree.'}
@@ -597,6 +683,26 @@ async function runBlock(mode,bi,nBlocks,reps){
   }
   blk.endedAt=new Date().toISOString();SES.blocks.push(blk);
   dbSet('agt_blocks/'+SES.sid+'_'+bi,{sid:SES.sid,pid:SES.pid,block:blk});
+}
+
+
+/* ---------- leaderboard (this device only) ---------- */
+function lbLoad(){try{return JSON.parse(localStorage.getItem('agt_lb')||'[]')}catch(e){return []}}
+function lbSave(a){try{localStorage.setItem('agt_lb',JSON.stringify(a))}catch(e){}}
+function lbRank(total){return 1+lbLoad().filter(function(e){return e.apples>total}).length}
+function renderLb(){
+  var host=$('#resLb');host.innerHTML='';
+  if(!SES.settings.leaderboard){host.hidden=true;return}
+  host.hidden=false;
+  var L=lbLoad(),mine=SES.sid;
+  var top=L.slice().sort(function(a,b){return b.apples-a.apples}).slice(0,10);
+  var h='<h3>Leaderboard</h3><p class="small muted">Apples earned per session, best first. Stored on this device only.</p><ol class="lb">';
+  top.forEach(function(e,i){h+='<li class="'+(e.sid===mine?'me':'')+'"><span class="rk">'+(i+1)+'</span><span class="nm">'+String(e.pid).replace(/[<>&]/g,'')+(e.sid===mine?' (this run)':'')+'</span><b>'+e.apples+'</b></li>'});
+  h+='</ol>';
+  if(!top.some(function(e){return e.sid===mine})){var me=L.filter(function(e){return e.sid===mine})[0];if(me)h+='<p class="small">This run: <b>'+me.apples+'</b> apples, rank '+(1+L.filter(function(e){return e.apples>me.apples}).length)+' of '+L.length+'</p>'}
+  h+='<button id="btnLbClear" class="secondary" type="button">Clear leaderboard</button>';
+  host.innerHTML=h;
+  $('#btnLbClear').addEventListener('click',function(){lbSave([]);renderLb()});
 }
 
 /* ---------- results ---------- */
@@ -659,7 +765,8 @@ $('#btnMoodNext').addEventListener('click',async function(){
   for(var i=0;i<order.length;i++)await runBlock(order[i],i,order.length,reps);
   SES.endedAt=new Date().toISOString();
   await dbSet('agt_sessions/'+SES.sid,clean(SES));
-  renderResults();show('results');
+  if(SES.settings.leaderboard){var L=lbLoad();L.push({sid:SES.sid,pid:SES.pid,apples:SES.totalApples,mode:SES.settings.mode,when:SES.endedAt});lbSave(L)}
+  renderResults();renderLb();show('results');
 });
 window.__agt={setInject:function(v){Input.inject=v},setTS:function(v){TS=v},session:function(){return SES},input:Input};
 initDb();
