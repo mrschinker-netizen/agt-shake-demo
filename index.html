@@ -42,17 +42,7 @@
 .offhint{font-size:15px;color:var(--muted);text-align:center;text-wrap:balance}
 .ex{background:linear-gradient(#9fd4f0 0%,#d9f0f7 55%,#eaf6df 100%);color:#16324a}
 .ex .ground{position:absolute;left:0;right:0;bottom:0;height:13%;background:linear-gradient(#7fb85a,#5c9440)}
-.extree{position:absolute;left:0;right:0;top:6%;bottom:9%;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.extree svg{width:min(104vw,78vh);height:auto;max-height:100%;overflow:visible}
-.gauge.exg{overflow:visible;position:absolute;left:max(10px,env(safe-area-inset-left,0px));top:max(52px,calc(env(safe-area-inset-top,0px) + 44px));bottom:56px;width:30px;height:auto;border-radius:15px;background:rgba(22,50,74,.18);z-index:3}
-.gauge.exg .fill{background:#1e6bff;border-radius:15px}
-.gauge.exg .fill.over{background:#1fbf5b}
 .gauge.exg .line{height:6px;left:-5px;right:-5px;background:#ff8a2b;border-radius:3px;box-shadow:0 0 0 2px #fff}
-.extop{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:0;right:0;display:flex;justify-content:space-between;padding:0 max(14px,env(safe-area-inset-right,0px)) 0 max(14px,env(safe-area-inset-left,0px));font-size:14px;font-weight:700;color:#16324a;pointer-events:none}
-.extimer{position:absolute;top:max(36px,calc(env(safe-area-inset-top,0px) + 30px));left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));height:6px;background:rgba(22,50,74,.15)}
-.extimer>i{background:#16324a}
-.exbar{position:absolute;left:max(14px,env(safe-area-inset-left,0px));right:max(14px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));height:22px;border-radius:11px;background:rgba(22,50,74,.2);z-index:3}
-.exbar>i{background:#ff8a2b}
 .expad{position:absolute;inset:0;z-index:2;touch-action:none}
 #exWord{z-index:4;font-size:1px}
 #exWord.w-go>span{font-size:min(22vw,20vh);color:#fff;text-shadow:0 4px 0 rgba(22,50,74,.55)}
@@ -73,6 +63,16 @@
 .intro [hidden]{display:none}
 .intro .tree text{fill:#fff!important}
 .intro .tree ellipse{fill:#5ea14f!important}
+.extree{position:absolute;left:0;right:0;bottom:3%;display:flex;align-items:flex-end;justify-content:center;pointer-events:none}
+.extree svg{width:min(100vw,62vh);height:auto;overflow:visible}
+.gauge.exg{overflow:visible;position:absolute;left:max(12px,env(safe-area-inset-left,0px));top:max(20px,calc(env(safe-area-inset-top,0px) + 12px));bottom:24px;width:30px;height:auto;border-radius:15px;background:rgba(10,40,60,.38);border:2px solid #fff;z-index:3}
+.gauge.exg .fill{background:#19b6c9;border-radius:12px}
+.gauge.exg .fill.over{background:#19b6c9;box-shadow:0 0 18px 4px rgba(255,255,255,.85)}
+.exc{inset:auto;left:0;right:0;top:max(3%,calc(env(safe-area-inset-top,0px) + 8px));height:25%;z-index:3}
+.exc>span{font-size:min(36vw,21vh)!important;color:#fff;text-shadow:0 5px 0 rgba(22,50,74,.55),0 0 24px rgba(22,50,74,.3)}
+.bkL{position:absolute;height:auto;pointer-events:none;overflow:visible}
+.exfx{position:absolute;inset:0;z-index:4;pointer-events:none}
+.fxa{position:absolute;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7b62,#d9382b 60%);}
 </style>
 <title>Apple Gathering Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -271,10 +271,21 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
   <div id="exFS" class="fs ex">
     <div class="ground"></div>
     <div id="exTree" class="extree"></div>
+    <div id="exCount" class="big exc"></div>
     <div class="gauge exg"><div class="fill" id="exFill"></div><div class="line" id="exLine"></div></div>
-    <div class="extop"><span id="exInfo"></span><span class="chip" id="exTotal" hidden></span></div>
-    <div class="bar thin extimer"><i id="exWindow"></i></div>
-    <div class="bar exbar"><i id="exBar"></i></div>
+    <svg id="bkBack" class="bkL" style="z-index:3" viewBox="0 0 100 80" aria-hidden="true">
+      <path d="M17 26 Q50 -34 83 26" fill="none" stroke="#7a4b24" stroke-width="6" stroke-linecap="round"/>
+      <ellipse cx="50" cy="26" rx="43" ry="13" fill="#4a2b12"/>
+      <ellipse cx="50" cy="26" rx="43" ry="13" fill="none" stroke="#8a5a34" stroke-width="3"/>
+    </svg>
+    <div id="exFx" class="exfx"></div>
+    <svg id="bkFront" class="bkL" style="z-index:5" viewBox="0 0 100 80" aria-hidden="true">
+      <path d="M7 27 Q50 44 93 27 L81 72 Q50 82 19 72 Z" fill="#c68a4a"/>
+      <path d="M12 38 Q50 54 88 38 M15 50 Q50 66 85 50 M18 62 Q50 77 82 62" fill="none" stroke="#a46d33" stroke-width="3"/>
+      <path d="M33 33 L28 74 M50 38 L50 79 M67 33 L72 74" fill="none" stroke="#a46d33" stroke-width="3"/>
+      <path d="M7 27 Q50 44 93 27" fill="none" stroke="#e0a766" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+    <div class="exdummy" hidden><i id="exWindow"></i><i id="exBar"></i></div>
     <div id="exWord" class="big w-go"></div>
     <div id="exPad" class="expad"></div>
   </div>
@@ -446,9 +457,20 @@ function treeShake(k,t){
   var ang=(Math.sin(t/38)*6.5+Math.sin(t/17)*2.2)*k,tx=Math.sin(t/29)*9*k;
   g.setAttribute('transform','translate('+tx.toFixed(2)+' 0) rotate('+ang.toFixed(2)+' 160 330)');
 }
+function setBk(big,animate){
+  var fs=$('#exFS'),W=fs.clientWidth,H=fs.clientHeight,w,l,t;
+  if(big){w=Math.min(W*0.7,320);l=(W-w)/2;t=H*0.30}
+  else{w=Math.min(74,W*0.2);l=W-w-14;t=Math.max(12,parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat'))||0)+12}
+  ['#bkBack','#bkFront'].forEach(function(id){
+    var e=$(id);e.style.transition=animate?'left .65s cubic-bezier(.3,1.35,.5,1),top .65s cubic-bezier(.3,1.35,.5,1),width .65s cubic-bezier(.3,1.35,.5,1)':'none';
+    e.style.left=l+'px';e.style.top=t+'px';e.style.width=w+'px';
+  });
+  return {l:l,t:t,w:w,h:w*0.8};
+}
 async function treeFall(){
   var g=document.getElementById('treeG');if(g)g.removeAttribute('transform');
   var ap=[].slice.call(document.querySelectorAll('#exTree .apple'));
+  var bk=setBk(true,true);
   ap.forEach(function(el,i){
     var d=318-parseFloat(el.getAttribute('data-y'))+(Math.random()*8);
     el.animate([
@@ -458,27 +480,52 @@ async function treeFall(){
       {transform:'translateY('+d+'px)',offset:.84,easing:'ease-out'},
       {transform:'translateY('+(d-7)+'px)',offset:.92,easing:'ease-in'},
       {transform:'translateY('+d+'px)',offset:1}
-    ],{duration:1100,delay:i*(Math.min(70,500/ap.length)/1),fill:'forwards'});
+    ],{duration:1100,delay:i*Math.min(70,500/ap.length),fill:'forwards'});
   });
-  await sleep(1100+Math.min(900,ap.length*70)+250);
+  await sleep(1100+Math.min(500,ap.length*70)+150);
+  /* apples jump into the basket */
+  var fs=$('#exFS').getBoundingClientRect(),fx=$('#exFx');fx.innerHTML='';
+  var mx=bk.l+bk.w*0.5,my=bk.t+bk.h*0.30,n=ap.length;
+  var done=0;
+  ap.forEach(function(el,i){
+    var r=el.getBoundingClientRect(),sz=r.width,cx=r.left+r.width/2-fs.left,cy=r.top+r.height/2-fs.top;
+    el.style.visibility='hidden';
+    var d=document.createElement('div');d.className='fxa';d.style.width=d.style.height=sz+'px';d.style.left=(cx-sz/2)+'px';d.style.top=(cy-sz/2)+'px';fx.appendChild(d);
+    var dx=mx-cx+(Math.random()-.5)*bk.w*0.28,dy=my-cy+bk.h*0.06*Math.random(),lift=Math.min(cy-my,380)*0.35+90;
+    d.animate([
+      {transform:'translate(0,0) scale(1)',offset:0,easing:'cubic-bezier(.2,.7,.4,1)'},
+      {transform:'translate('+dx*0.55+'px,'+(dy-lift)+'px) scale(1.1)',offset:.55,easing:'cubic-bezier(.5,0,.8,.6)'},
+      {transform:'translate('+dx+'px,'+dy+'px) scale(.7)',offset:1}
+    ],{duration:720,delay:i*Math.min(110,900/n),fill:'forwards'});
+  });
+  await sleep(720+Math.min(110,900/n)*n+500);
+}
+function exCountShow(n,anim){
+  var w=$('#exCount');w.innerHTML='';
+  if(n<1)return;
+  var sp=document.createElement('span');sp.textContent=String(n);w.appendChild(sp);
+  void sp.offsetWidth;sp.style.animation='grow .55s cubic-bezier(.18,.9,.25,1) forwards';
 }
 function exFrame(cfg){
-  var ref=cfg.kind==='time'?cfg.ampT:0.7;
-  return function(a,prog,t){
+  var ref=cfg.kind==='time'?cfg.ampT:0.7,shown=-1;
+  return function(a,prog,t,t0){
     var r=clamp(a/ref,0,1.3),k=Math.pow(Math.min(r,1),1.5)+(r>1?0.12:0);
     treeShake(Math.min(k,1.1),t);
+    var n=cfg.kind==='time'?Math.ceil(cfg.durT*(1-prog)-0.001):Math.ceil((cfg.windowMs-(t-t0))/1000-0.001);
+    if(n!==shown){shown=n;exCountShow(n)}
   };
 }
-async function exertScreen(spec,reward,infoText,showWord){
+async function exertScreen(spec,reward,infoText){
   show('exert');setTotal();
   $('#exTree').innerHTML=treeBig(reward);
-  $('#exInfo').textContent=infoText;
+  setBk(false,false);$('#exFx').innerHTML='';$('#exCount').innerHTML='';
   var w=$('#exWord');w.innerHTML='';
   var sp=document.createElement('span');sp.textContent=Input.source==='motion'?'SHAKE!':'SCRIBBLE!';w.appendChild(sp);
   void sp.offsetWidth;sp.style.animation='grow .5s cubic-bezier(.18,.9,.25,1) forwards, fadeout .5s ease-in .55s forwards';
   var cfg=execCfg(spec);cfg.onFrame=exFrame(cfg);
   var r=await runExertion(cfg);
   var g=document.getElementById('treeG');if(g)g.removeAttribute('transform');
+  $('#exCount').innerHTML='';
   return r;
 }
 
@@ -502,7 +549,7 @@ function runExertion(cfg){
       if(cfg.kind==='cal'){prog=(t-t0)/cfg.windowMs;series.push([Math.round(t-t0),A])}
       fill.style.height=(clamp(a,0,1.2)/1.2*100)+'%';fill.classList.toggle('over',cfg.thr!=null&&a>=cfg.thr);
       bar.style.width=(clamp(prog,0,1)*100)+'%';win.style.width=(clamp((t-t0)/cfg.windowMs,0,1)*100)+'%';
-      if(cfg.onFrame)cfg.onFrame(a,prog,t);
+      if(cfg.onFrame)cfg.onFrame(a,prog,t,t0);
       if(t>=nextTr){trace.push(Math.round(clamp(a,0,3)*100));nextTr+=100}
       if(cfg.kind!=='cal'&&prog>=1){ok=true;done=true}
       if(t-t0>=cfg.windowMs)done=true;
@@ -623,13 +670,12 @@ function buildOffers(reps){
   idx.slice(0,nNo).forEach(function(i){all[i].noEffort=true});
   return all;
 }
-function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTotal','#exTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples+(st.leaderboard?' \u00b7 #'+lbRank(SES.totalApples):'')})}
+function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTotal'].forEach(function(s){$(s).hidden=!on;$(s).textContent='Apples '+SES.totalApples+(st.leaderboard?' \u00b7 #'+lbRank(SES.totalApples):'')})}
 
 async function practiceBlock(mode){
   for(var i=0;i<4;i++){
     var spec=effortSpec(mode,i);
     await exertScreen(spec,6,'Practice '+(i+1)+' of 4 · '+spec.txt.join(' · '));
-    $('#exTotal').hidden=true;
     $('#fbText').textContent='Practice done';$('#fbSub').textContent='';show('feedback');await sleep(900);
   }
 }
