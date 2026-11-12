@@ -82,6 +82,8 @@
 .advbody{display:flex;flex-direction:column;gap:14px;padding:0 16px 16px}
 .bigstart{min-height:68px;font-size:22px;border-radius:999px}
 .startnote{text-align:center;font-size:15px;color:var(--muted);min-height:22px}
+.giveup{position:absolute;left:50%;transform:translateX(-50%);bottom:max(22px,env(safe-area-inset-bottom,0px));z-index:6;min-height:56px;min-width:170px;border-radius:999px;background:rgba(20,35,60,.78);color:#fff;font-size:20px;border:2px solid rgba(255,255,255,.7)}
+.cell.gaveup{background:var(--surface);border:2px dashed var(--accent);color:var(--accent)}
 </style>
 <title>Apple Gathering Prototype</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -187,6 +189,8 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
       <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
       <label class="check"><input id="optTotal" type="checkbox" checked><span>Show running apple score</span></label>
       <label class="check"><input id="optLb" type="checkbox" checked><span>Leaderboard</span></label>
+      <div><label for="noEffShare">Accepted offers with no effort needed (%)</label><input id="noEffShare" type="number" min="0" max="50" value="25"></div>
+      <label class="check"><input id="optGiveUp" type="checkbox"><span>Allow giving up after accepting (sunk-cost measure)</span></label>
       <label class="check"><input id="optStrict" type="checkbox"><span>Strict hold (gauge resets below the line)</span></label>
       <label class="check"><input id="optPractice" type="checkbox" checked><span>Practice before each block</span></label>
       <div><label for="fixedAmp">Fixed strength, duration metric (% of maximum)</label><input id="fixedAmp" type="number" min="30" max="70" value="50"></div>
@@ -295,6 +299,7 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
     <div class="exdummy" hidden><i id="exWindow"></i><i id="exBar"></i></div>
     <div id="exWord" class="big w-go"></div>
     <div id="exPad" class="expad"></div>
+    <button id="btnGiveUp" class="giveup" type="button" hidden>Give up</button>
   </div>
 </section>
 
@@ -330,10 +335,12 @@ var REWARDS=[3,6,9,12];
 var EFFORT_PCT=[20,40,60,80];
 var FLOOR=0.10;           /* normalised amplitude below this counts as tremor, not effort */
 var WIN_MS=250;           /* amplitude = RMS of the signal over the last 250 ms */
+function V(){return Input.source==='motion'?{v:'shake',ing:'shaking',n:'shake'}:{v:'scribble',ing:'scribbling',n:'scribble'}}
+function tx(t){var w=V();return t.replace(/\{v\}/g,w.v).replace(/\{ing\}/g,w.ing).replace(/\{n\}/g,w.n)}
 var MODES={
-  amp:{name:'Amplitude',desc:'Effort is how hard you shake. Keep your shake above the orange line until the bar fills (3 seconds above the line in total).'},
-  dur:{name:'Duration',desc:'Effort is how long you shake. The strength needed is fixed. Longer trees need more total time above the orange line.'},
-  work:{name:'Combined',desc:'Effort is total shaking work: strength and time together. You can shake hard for a short time or gently for longer.'},
+  amp:{name:'Amplitude',desc:'Effort is how hard you {v}. Keep your {n} above the orange line until the countdown reaches zero (3 seconds above the line in total).'},
+  dur:{name:'Duration',desc:'Effort is how long you {v}. The strength needed is fixed. Longer trees need more total time above the orange line.'},
+  work:{name:'Combined',desc:'Effort is total {ing} work: strength and time together. You can {v} hard for a short time or gently for longer.'},
   fac:{name:'Separate',desc:'Strength and time are set independently. Each tree shows both a strength level and a time.'}
 };
 
@@ -377,8 +384,8 @@ function checkMotion(){
   st.className='status';st.textContent='Checking. If asked, allow motion access, then shake the phone for a moment.';
   var ask=(typeof DeviceMotionEvent!=='undefined'&&typeof DeviceMotionEvent.requestPermission==='function')?DeviceMotionEvent.requestPermission():Promise.resolve('granted');
   return Promise.resolve(ask).then(function(res){
-    if(res!=='granted'){fail('Motion permission was not granted. Using the shake pad.');return}
-    if(typeof window.addEventListener!=='function'||typeof DeviceMotionEvent==='undefined'){fail('This browser has no motion sensor API. Using the shake pad.');return}
+    if(res!=='granted'){fail('Motion permission was not granted. Using scribble.');return}
+    if(typeof window.addEventListener!=='function'||typeof DeviceMotionEvent==='undefined'){fail('This browser has no motion sensor API. Using scribble.');return}
     if(!motionListening){window.addEventListener('devicemotion',onMotion);motionListening=true}
     Input.motionN=0;
     return new Promise(function(r){setTimeout(r,2500)}).then(function(){
@@ -387,9 +394,9 @@ function checkMotion(){
         var o=$('#src').querySelector('option[value="motion"]');o.disabled=false;o.textContent='Phone motion (sensor working)';
         $('#src').value='motion';Input.source='motion';
         st.className='status ok';st.textContent='Motion sensor working ('+Input.motionN+' readings). Using phone motion.';
-      }else fail('No motion readings arrived. The viewer blocks motion here. Using the shake pad.');
+      }else fail('No motion readings arrived. The viewer blocks motion here. Using scribble.');
     });
-  }).catch(function(){fail('Motion check failed. Using the shake pad.')});
+  }).catch(function(){fail('Motion check failed. Using scribble.')});
   function fail(m){Input.motionOK=false;st.className='status warn';st.textContent=m;$('#src').value='pad';Input.source='pad'}
 }
 $('#btnMotion').addEventListener('click',checkMotion);
@@ -423,7 +430,7 @@ function newSession(){
     userAgent:navigator.userAgent,
     screen:[window.innerWidth,window.innerHeight,window.devicePixelRatio||1],
     inputSource:Input.source,motionOK:Input.motionOK,
-    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,leaderboard:$('#optLb').checked,strict:$('#optStrict').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:0.25},
+    settings:{mode:mode,reps:mode==='compare'?1:clamp(parseInt($('#reps').value,10)||5,1,5),showTotal:$('#optTotal').checked,leaderboard:$('#optLb').checked,strict:$('#optStrict').checked,giveUp:$('#optGiveUp').checked,practice:$('#optPractice').checked,fixedAmp:clamp(parseInt($('#fixedAmp').value,10)||50,30,70)/100,rewards:REWARDS,effortPct:EFFORT_PCT,floor:FLOOR,ampWindowMs:WIN_MS,noEffortShare:clamp(parseInt($('#noEffShare').value,10)||0,0,50)/100},
     mood:null,energy:null,calibration:null,blocks:[],endedAt:null,totalApples:0
   };
   return SES;
@@ -522,7 +529,7 @@ function exFrame(cfg){
     if(n!==shown){shown=n;exCountShow(n)}
   };
 }
-async function exertScreen(spec,reward,infoText){
+async function exertScreen(spec,reward,infoText,isPractice){
   show('exert');setTotal();
   $('#exTree').innerHTML=treeBig(reward);
   setBk(false,false);$('#exFx').innerHTML='';$('#exCount').innerHTML='';
@@ -531,7 +538,9 @@ async function exertScreen(spec,reward,infoText){
   var sp=document.createElement('span');sp.textContent=Input.source==='motion'?'SHAKE!':'SCRIBBLE!';w.appendChild(sp);
   void sp.offsetWidth;sp.style.animation='grow .5s cubic-bezier(.18,.9,.25,1) forwards, fadeout .5s ease-in .55s forwards';
   var cfg=execCfg(spec);cfg.onFrame=exFrame(cfg);
-  var r=await runExertion(cfg);
+  var ab={v:false},gb=$('#btnGiveUp');cfg.abortRef=ab;
+  gb.hidden=!(SES.settings.giveUp&&!isPractice);gb.onclick=function(){ab.v=true};
+  var r=await runExertion(cfg);gb.hidden=true;
   var g=document.getElementById('treeG');if(g)g.removeAttribute('transform');
   $('#exCount').innerHTML='';
   return r;
@@ -540,7 +549,7 @@ async function exertScreen(spec,reward,infoText){
 /* ---------- exertion engine ---------- */
 function runExertion(cfg){
   return new Promise(function(resolve){
-    var A0=cfg.Amax||1,t0=now(),last=t0,above=0,belowMs=0,W=0,peak=0,nextTr=t0,trace=[],series=[],done=false,ok=false;
+    var A0=cfg.Amax||1,t0=now(),last=t0,above=0,belowMs=0,W=0,peak=0,nextTr=t0,trace=[],series=[],done=false,ok=false,aborted=false;
     var fill=cfg.fillEl,bar=cfg.barEl,win=cfg.winEl,line=cfg.lineEl;
     if(line&&cfg.thr!=null)line.style.bottom=(clamp(cfg.thr,0,1.2)/1.2*100)+'%';
     Input.buf.length=0;Input.pad.lx=null;
@@ -561,7 +570,8 @@ function runExertion(cfg){
       if(t>=nextTr){trace.push(Math.round(clamp(a,0,3)*100));nextTr+=100}
       if(cfg.kind!=='cal'&&prog>=1){ok=true;done=true}
       if(t-t0>=cfg.windowMs)done=true;
-      if(done){resolve({success:ok,peak:peak,peakNorm:peak/A0,timeAboveMs:Math.round(above),work:W,usedMs:Math.round(t-t0),trace:trace,series:series});return}
+      if(cfg.abortRef&&cfg.abortRef.v){aborted=true;done=true}
+      if(done){resolve({aborted:aborted,prog:clamp(prog,0,1),success:ok,peak:peak,peakNorm:peak/A0,timeAboveMs:Math.round(above),work:W,usedMs:Math.round(t-t0),trace:trace,series:series});return}
       requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -671,10 +681,10 @@ async function calibrate(){
 
 /* ---------- blocks and trials ---------- */
 function click(el){return new Promise(function(res){el.addEventListener('click',function h(){el.removeEventListener('click',h);res()})})}
-function buildOffers(reps){
+function buildOffers(reps,share){
   var all=[];for(var r=0;r<4;r++)for(var e=0;e<4;e++)for(var k=0;k<reps;k++)all.push({ri:r,ei:e});
   for(var tries=0;tries<200;tries++){all=shuffle(all);var okk=true;for(var i=1;i<all.length;i++){if(all[i].ri===all[i-1].ri&&all[i].ei===all[i-1].ei){okk=false;break}}if(okk)break}
-  var idx=shuffle(all.map(function(_,i){return i})),nNo=Math.floor(all.length*0.25);
+  var idx=shuffle(all.map(function(_,i){return i})),nNo=Math.floor(all.length*(share==null?0.25:share));
   idx.slice(0,nNo).forEach(function(i){all[i].noEffort=true});
   return all;
 }
@@ -683,7 +693,7 @@ function setTotal(){var st=SES.settings,on=st.showTotal||st.leaderboard;['#offTo
 async function practiceBlock(mode){
   for(var i=0;i<4;i++){
     var spec=effortSpec(mode,i);
-    await exertScreen(spec,6,'Practice '+(i+1)+' of 4 · '+spec.txt.join(' · '));
+    await exertScreen(spec,6,'',true);
     $('#fbText').textContent='Practice done';$('#fbSub').textContent='';show('feedback');await sleep(900);
   }
 }
@@ -697,17 +707,17 @@ async function runBlock(mode,bi,nBlocks,reps){
   var info=MODES[mode];
   show('blockintro');
   $('#biCount').textContent='Block '+(bi+1)+' of '+nBlocks;$('#biSrc').textContent=Input.source==='motion'?'Phone motion':'Scribble';
-  $('#biEyebrow').textContent='Effort metric';$('#biTitle').textContent=info.name;$('#biText').textContent=info.desc;
-  $('#biSub').textContent='Each offer shows apples and an effort level. Accept to try, or skip to see the next tree. Skipping is instant.';
+  $('#biEyebrow').textContent='Effort metric';$('#biTitle').textContent=info.name;$('#biText').textContent=tx(info.desc);
+  $('#biSub').textContent=tx('Each offer shows apples and an effort level. Accept to try, or skip to see the next tree. Skipping is instant.'+(SES.settings.noEffortShare>0?' On some accepted trees no {ing} is needed, and you will not know which in advance.':'')+(SES.settings.giveUp?' After accepting, you can give up at any point and lose that tree.':''));
   await click($('#btnBlockGo'));
   if(SES.settings.practice)await practiceBlock(mode);
-  var offers=buildOffers(reps),blk={idx:bi,mode:mode,startedAt:new Date().toISOString(),trials:[]};
+  var offers=buildOffers(reps,SES.settings.noEffortShare),blk={idx:bi,mode:mode,startedAt:new Date().toISOString(),trials:[]};
   for(var n=0;n<offers.length;n++){
     var o=offers[n],spec=effortSpec(mode,o.ei),reward=REWARDS[o.ri];
     show('offer');setTotal();
     $('#offProg').textContent=info.name+' · offer '+(n+1)+' of '+offers.length;
     $('#offTree').innerHTML=treeSVG(reward,spec.vis.h,spec.vis.secs);
-    $('#offHint').textContent=spec.kind==='work'?'Accept, then shake to fill the bar with total shaking work before time runs out. The harder you shake, the more the tree rattles.':'Accept, then shake until the tree rattles past the orange line, and hold it there until the bar fills. The apples fall when you succeed.';
+    $('#offHint').textContent=tx(spec.kind==='work'?'Accept, then {v} to fill the bar with total {ing} work before time runs out. The harder you {v}, the more the tree rattles.':'Accept, then {v} until the tree rattles past the orange line, and hold it there while the countdown runs down. The apples fall when you succeed.');
     $('#offEffort').innerHTML=spec.txt.map(function(t){return '<span class="chip">'+t+'</span>'}).join('');
     var onset=now(),wall=new Date(),choice=await new Promise(function(res){
       function a(){cl();res('accept')}function s(){cl();res('skip')}
@@ -721,12 +731,13 @@ async function runBlock(mode,bi,nBlocks,reps){
     if(choice==='accept'){
       if(o.noEffort){
         rec.won=reward;SES.totalApples+=reward;
-        $('#fbText').textContent='No squeeze needed. +'+reward+' apples';$('#fbSub').textContent='';show('feedback');await sleep(1100);
+        $('#fbText').textContent=tx('No {ing} needed. +')+reward+' apples';$('#fbSub').textContent='';show('feedback');await sleep(1100);
       }else{
         var r=await exertScreen(spec,reward,info.name+' · '+spec.txt.join(' · '));
         if(r.success)await treeFall();else await sleep(450);
-        rec.executed=true;rec.success=r.success;rec.peakNorm=Math.round(r.peakNorm*1000)/1000;rec.timeAboveMs=r.timeAboveMs;rec.workDone=Math.round(r.work*1000)/1000;rec.usedMs=r.usedMs;rec.trace=r.trace;
+        rec.executed=true;rec.gaveUp=!!r.aborted;rec.progAtEnd=Math.round(r.prog*1000)/1000;rec.success=r.success;rec.peakNorm=Math.round(r.peakNorm*1000)/1000;rec.timeAboveMs=r.timeAboveMs;rec.workDone=Math.round(r.work*1000)/1000;rec.usedMs=r.usedMs;rec.trace=r.trace;
         if(r.success){rec.won=reward;SES.totalApples+=reward;$('#fbText').textContent='+'+reward+' apples';$('#fbSub').textContent=''}
+        else if(r.aborted){$('#fbText').textContent='You gave up';$('#fbSub').textContent='No apples for this tree.'}
         else{$('#fbText').textContent='Not enough this time';$('#fbSub').textContent='No apples for this tree.'}
         show('feedback');await sleep(1100);
       }
@@ -768,11 +779,11 @@ function renderResults(){
   SES.blocks.forEach(function(b){
     var T=b.trials,acc=T.filter(function(t){return t.choice==='accept'}),ex=T.filter(function(t){return t.executed});
     var card=document.createElement('div');card.className='card';
-    var h='<h3>'+MODES[b.mode].name+'</h3><div class="stats"><span>Accepted <b>'+pct(acc.length/T.length)+'</b></span><span>Succeeded when squeezing <b>'+pct(ex.length?ex.filter(function(t){return t.success}).length/ex.length:null)+'</b></span><span>Mean decision time <b>'+(Math.round(mean(T.map(function(t){return t.rtMs}))/10)/100)+' s</b></span><span>Mean peak shake <b>'+pct(mean(ex.map(function(t){return t.peakNorm})))+'</b> of max</span></div>';
+    var h='<h3>'+MODES[b.mode].name+'</h3><div class="stats"><span>Accepted <b>'+pct(acc.length/T.length)+'</b></span><span>Succeeded when effort was needed <b>'+pct(ex.length?ex.filter(function(t){return t.success}).length/ex.length:null)+'</b></span><span>Mean decision time <b>'+(Math.round(mean(T.map(function(t){return t.rtMs}))/10)/100)+' s</b></span><span>Mean peak shake <b>'+pct(mean(ex.map(function(t){return t.peakNorm})))+'</b> of max</span></div>';
     h+='<p class="small muted">Rows are reward (3 to 12 apples), columns are effort level (low to high). Filled is accepted, orange outline is accepted but missed, grey is skipped.</p><div class="grid4"><span></span>'+EFFORT_PCT.map(function(p,i){return '<span style="text-align:center">E'+(i+1)+'</span>'}).join('');
     for(var r=3;r>=0;r--){h+='<span>'+REWARDS[r]+'</span>';for(var e=0;e<4;e++){
       var ts=T.filter(function(t){return t.rewardIdx===r&&t.effortIdx===e}),cl='skip',tx='';
-      if(ts.length){var t=ts[0];if(t.choice==='accept'){if(t.noEffort){cl='noeff';tx='free'}else if(t.success){cl='acc';tx='ok'}else{cl='fail';tx='miss'}}else{cl='skip';tx='skip'}}
+      if(ts.length){var t=ts[0];if(t.choice==='accept'){if(t.noEffort){cl='noeff';tx='free'}else if(t.success){cl='acc';tx='ok'}else if(t.gaveUp){cl='gaveup';tx='quit'}else{cl='fail';tx='miss'}}else{cl='skip';tx='skip'}}
       if(ts.length>1){var a2=ts.filter(function(t){return t.choice==='accept'}).length;cl=a2>ts.length/2?'acc':'skip';tx=a2+'/'+ts.length}
       h+='<div class="cell '+cl+'">'+tx+'</div>'}}
     h+='</div>';
@@ -812,7 +823,7 @@ $('#energy').addEventListener('input',function(){$('#energyV').textContent=this.
 /* Editing a text field leaves an undo history that iOS offers to undo when the phone shakes. Only a page reload empties it,
    so after a field is edited we save the form, reload, and restore the values programmatically (which leaves no history). */
 (function(){
-  var KEY='agt_form',IDS=['pid','fixedAmp','reps'];
+  var KEY='agt_form',IDS=['pid','fixedAmp','reps','noEffShare'];
   try{var f=JSON.parse(localStorage.getItem(KEY)||'null');if(f){IDS.forEach(function(id){var e=document.getElementById(id);if(e&&f[id]!=null)e.value=f[id]})}}catch(e){}
   function persistAndReload(){
     try{var o={};IDS.forEach(function(id){o[id]=document.getElementById(id).value});localStorage.setItem(KEY,JSON.stringify(o))}catch(e){return}
