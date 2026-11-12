@@ -763,7 +763,7 @@ function renderLb(){
 function pct(x){return x===null?'n/a':Math.round(x*100)+'%'}
 function renderResults(){
   $('#sidOut').textContent=SES.sid;
-  $('#saveMsg').textContent=DB?(saveLog.fail?'Saved '+saveLog.ok+' item(s) to the artifact; '+saveLog.fail+' failed ('+saveLog.last+'). Use Save a copy as a backup.':'Saved to the artifact. Claude can read this session now.'):'Not saved to the artifact in this view. Use Save a copy or Copy data.';
+  $('#saveMsg').textContent=DB?(saveLog.fail?'Saved '+saveLog.ok+' item(s) to the artifact; '+saveLog.fail+' failed ('+saveLog.last+'). Use Save a copy as a backup.':'Saved to the artifact. Claude can read this session now.'):'Results are not stored online. Tap Save a copy or Copy data to keep or send them.';
   var host=$('#resBlocks');host.innerHTML='';
   SES.blocks.forEach(function(b){
     var T=b.trials,acc=T.filter(function(t){return t.choice==='accept'}),ex=T.filter(function(t){return t.executed});
@@ -809,16 +809,18 @@ $('#btnAgain').addEventListener('click',function(){location.reload()});
 $('#mode').addEventListener('change',function(){$('#repsWrap').hidden=(this.value==='compare')});
 $('#mood').addEventListener('input',function(){$('#moodV').textContent=this.value});
 $('#energy').addEventListener('input',function(){$('#energyV').textContent=this.value});
-/* iOS "Shake to Undo" fires when a text field has edit history. Blur and replace the fields so the undo stack is empty. */
-function clearUndo(){
-  try{if(document.activeElement&&document.activeElement.blur)document.activeElement.blur()}catch(e){}
-  [].slice.call(document.querySelectorAll('input[type=text],input[type=number]')).forEach(function(el){
-    var c=el.cloneNode(true);c.value=el.value;c.setAttribute('autocomplete','off');c.setAttribute('autocorrect','off');c.setAttribute('spellcheck','false');
-    el.parentNode.replaceChild(c,el);
-  });
-}
-document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();e.target.blur()}});
-document.addEventListener('focusout',function(e){if(e.target&&e.target.tagName==='INPUT'&&(e.target.type==='text'||e.target.type==='number')){setTimeout(function(){if(!document.activeElement||document.activeElement.tagName!=='INPUT')clearUndo()},50)}});
+/* Editing a text field leaves an undo history that iOS offers to undo when the phone shakes. Only a page reload empties it,
+   so after a field is edited we save the form, reload, and restore the values programmatically (which leaves no history). */
+(function(){
+  var KEY='agt_form',IDS=['pid','fixedAmp','reps'];
+  try{var f=JSON.parse(localStorage.getItem(KEY)||'null');if(f){IDS.forEach(function(id){var e=document.getElementById(id);if(e&&f[id]!=null)e.value=f[id]})}}catch(e){}
+  function persistAndReload(){
+    try{var o={};IDS.forEach(function(id){o[id]=document.getElementById(id).value});localStorage.setItem(KEY,JSON.stringify(o))}catch(e){return}
+    location.reload();
+  }
+  IDS.forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',persistAndReload)});
+  document.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'){e.preventDefault();e.target.blur()}});
+})();
 $('#btnStart').addEventListener('click',async function(){
   var b=this,note=$('#startNote');
   if(!Input.motionOK&&Input.inject===null){
@@ -828,7 +830,6 @@ $('#btnStart').addEventListener('click',async function(){
     b.disabled=false;
   }
   note.textContent='';
-  clearUndo();
   newSession();show('mood');
 });
 $('#btnMoodNext').addEventListener('click',async function(){
