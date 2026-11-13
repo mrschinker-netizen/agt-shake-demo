@@ -69,6 +69,7 @@
 .gauge.exg .fill{background:#19b6c9;border-radius:12px}
 .gauge.exg .fill.over{background:#19b6c9;box-shadow:0 0 18px 4px rgba(255,255,255,.85)}
 .exc{inset:auto;left:0;right:0;top:20%;height:0;z-index:3}
+.exc>span.sw{font-size:min(26vw,13vh)!important;font-variant-numeric:tabular-nums;letter-spacing:0;animation:none}
 .exc>span{font-size:min(40vw,23vh)!important;color:#fff;text-shadow:0 3px 0 #1d2f55,0 7px 0 rgba(29,47,85,.75),0 12px 26px rgba(10,20,45,.7),0 0 4px rgba(10,20,45,.6)}
 .bkL{position:absolute;height:auto;pointer-events:none;overflow:visible}
 .exfx{position:absolute;inset:0;z-index:4;pointer-events:none}
@@ -180,11 +181,10 @@ pre{margin:0;white-space:pre-wrap;word-break:break-all;font-size:11px;max-height
         <select id="src"><option value="pad">Scribble on screen</option><option value="motion" disabled>Phone motion (run the check first)</option></select></div>
       <div><label for="mode">Effort metric</label>
         <select id="mode">
-          <option value="compare" selected>All four (4 blocks of 16 offers)</option>
+          <option value="compare" selected>All three (3 blocks of 16 offers)</option>
           <option value="amp">Amplitude</option>
           <option value="dur">Duration</option>
           <option value="work">Combined work</option>
-          <option value="fac">Separate strength and time</option>
         </select></div>
       <div id="repsWrap" hidden><label for="reps">Repeats of each reward by effort pair</label><input id="reps" type="number" min="1" max="5" value="5"></div>
       <label class="check"><input id="optTotal" type="checkbox" checked><span>Show running apple score</span></label>
@@ -342,10 +342,9 @@ var WIN_MS=250;           /* amplitude = RMS of the signal over the last 250 ms 
 function V(){return Input.source==='motion'?{v:'shake',ing:'shaking',n:'shake'}:{v:'scribble',ing:'scribbling',n:'scribble'}}
 function tx(t){var w=V();return t.replace(/\{v\}/g,w.v).replace(/\{ing\}/g,w.ing).replace(/\{n\}/g,w.n)}
 var MODES={
-  amp:{name:'Amplitude',desc:'Effort is how hard you {v}. Keep your {n} above the orange line until the countdown reaches zero (3 seconds above the line in total).'},
+  amp:{name:'Amplitude',desc:'Effort is how hard you {v}. Keep your {n} above the orange line until the stopwatch counts down to zero (3 seconds above the line in total).'},
   dur:{name:'Duration',desc:'Effort is how long you {v}. The strength needed is fixed. Longer trees need more total time above the orange line.'},
-  work:{name:'Combined',desc:'Effort is total {ing} work: strength and time together. You can {v} hard for a short time or gently for longer.'},
-  fac:{name:'Separate',desc:'Strength and time are set independently. Each tree shows both a strength level and a time.'}
+  work:{name:'Combined',desc:'Effort is total {ing} work: strength and time together. You can {v} hard for a short time or gently for longer. The bar on the left fills as your work adds up, and there is no timer.'}
 };
 
 /* ---------- input layer ---------- */
@@ -445,9 +444,8 @@ function effortSpec(mode,idx){
   var pct=EFFORT_PCT[idx],fa=SES.settings.fixedAmp;
   if(mode==='amp')return{kind:'time',ampT:pct/100,durT:3,windowMs:6000,vis:{h:pct/100,secs:3},txt:['Strength '+pct+'%','3.0 s'],pct:pct};
   if(mode==='dur'){var d=[1.5,3,4.5,6][idx];return{kind:'time',ampT:fa,durT:d,windowMs:(d+3)*1000,vis:{h:fa,secs:d},txt:['Strength '+Math.round(fa*100)+'%',d.toFixed(1)+' s'],pct:pct}}
-  if(mode==='work')return{kind:'work',workT:pct/100,windowMs:10000,vis:{h:pct/100,secs:null},txt:['Total effort '+pct+'%'],pct:pct};
-  var c=[[0.4,2],[0.4,4],[0.7,2],[0.7,4]][idx];
-  return{kind:'time',ampT:c[0],durT:c[1],windowMs:(c[1]+3)*1000,vis:{h:c[0],secs:c[1]},txt:['Strength '+Math.round(c[0]*100)+'%',c[1].toFixed(1)+' s'],pct:null};
+  /* combined work: same 5 s window as one calibration trial, so a share of the calibrated maximum is a real share of what the person can do */
+  return{kind:'work',workT:pct/100,windowMs:5000,vis:{h:pct/100,secs:null},txt:['Total effort '+pct+'%'],pct:pct};
 }
 
 /* ---------- drawing ---------- */
@@ -525,12 +523,14 @@ function exCountShow(n,anim){
   void sp.offsetWidth;sp.style.animation='grow .55s cubic-bezier(.18,.9,.25,1) forwards';
 }
 function exFrame(cfg){
-  var ref=cfg.kind==='time'?cfg.ampT:0.7,shown=-1;
+  var ref=cfg.kind==='time'?cfg.ampT:0.7,sw=null;
   return function(a,prog,t,t0){
     var r=clamp(a/ref,0,1.3),k=Math.pow(Math.min(r,1),1.5)+(r>1?0.12:0);
     treeShake(Math.min(k,1.1),t);
-    var n=cfg.kind==='time'?Math.ceil(cfg.durT*(1-prog)-0.001):Math.ceil((cfg.windowMs-(t-t0))/1000-0.001);
-    if(n!==shown){shown=n;exCountShow(n)}
+    if(cfg.kind==='time'){ /* stopwatch: seconds of effort still needed, to the millisecond */
+      if(!sw){var w=$('#exCount');w.innerHTML='';sw=document.createElement('span');sw.className='sw';w.appendChild(sw)}
+      sw.textContent=(Math.max(0,cfg.durT*1000*(1-prog))/1000).toFixed(3);
+    }
   };
 }
 async function exertScreen(spec,reward,infoText,isPractice){
@@ -555,7 +555,7 @@ function runExertion(cfg){
   return new Promise(function(resolve){
     var A0=cfg.Amax||1,t0=now(),last=t0,above=0,belowMs=0,W=0,peak=0,nextTr=t0,trace=[],series=[],done=false,ok=false,aborted=false;
     var fill=cfg.fillEl,bar=cfg.barEl,win=cfg.winEl,line=cfg.lineEl;
-    if(line&&cfg.thr!=null)line.style.bottom=(clamp(cfg.thr,0,1.2)/1.2*100)+'%';
+    if(line){line.style.display=cfg.kind==='work'?'none':'';if(cfg.thr!=null&&cfg.kind!=='work')line.style.bottom=(clamp(cfg.thr,0,1.2)/1.2*100)+'%'}
     Input.buf.length=0;Input.pad.lx=null;
     function step(){
       var t=now(),dt=Math.min(100*TS,t-last);last=t;
@@ -568,7 +568,8 @@ function runExertion(cfg){
       var prog=0;
       if(cfg.kind==='time')prog=above/(cfg.durT*1000);else if(cfg.kind==='work')prog=W/cfg.workT;
       if(cfg.kind==='cal'){prog=(t-t0)/cfg.windowMs;series.push([Math.round(t-t0),A])}
-      fill.style.height=(clamp(a,0,1.2)/1.2*100)+'%';fill.classList.toggle('over',cfg.thr!=null&&a>=cfg.thr);
+      if(cfg.kind==='work'){fill.style.height=(clamp(prog,0,1)*100)+'%';fill.classList.toggle('over',prog>=1)}
+      else{fill.style.height=(clamp(a,0,1.2)/1.2*100)+'%';fill.classList.toggle('over',cfg.thr!=null&&a>=cfg.thr)}
       bar.style.width=(clamp(prog,0,1)*100)+'%';win.style.width=(clamp((t-t0)/cfg.windowMs,0,1)*100)+'%';
       if(cfg.onFrame)cfg.onFrame(a,prog,t,t0);
       if(t>=nextTr){trace.push(Math.round(clamp(a,0,3)*100));nextTr+=100}
@@ -730,7 +731,7 @@ async function runBlock(mode,bi,nBlocks,reps){
     var tTrial=performance.now();show('offer');setTotal();
     $('#offProg').textContent=info.name+' · offer '+(n+1)+' of '+offers.length;
     $('#offTree').innerHTML=treeSVG(reward,spec.vis.h,spec.vis.secs);
-    $('#offHint').textContent=tx(spec.kind==='work'?'Accept, then {v} to fill the bar with total {ing} work before time runs out. The harder you {v}, the more the tree rattles.':'Accept, then {v} until the tree rattles past the orange line, and hold it there while the countdown runs down. The apples fall when you succeed.');
+    $('#offHint').textContent=tx(spec.kind==='work'?'Accept, then {v} to fill the bar on the left. It shows your total {ing} work so far. The harder you {v}, the more the tree rattles.':'Accept, then {v} until the tree rattles past the orange line, and hold it there while the stopwatch counts down. The apples fall when you succeed.');
     $('#offEffort').innerHTML=spec.txt.map(function(t){return '<span class="chip">'+t+'</span>'}).join('');
     var onset=now(),wall=new Date(),choice=await new Promise(function(res){
       function a(){cl();res('accept')}function s(){cl();res('skip')}
@@ -861,7 +862,7 @@ $('#btnMoodNext').addEventListener('click',async function(){
   SES.mood=parseInt($('#mood').value,10);SES.energy=parseInt($('#energy').value,10);
   await calibrate();
   await dbSet('agt_sessions/'+SES.sid,clean(SES));
-  var mode=SES.settings.mode,order=mode==='compare'?shuffle(['amp','dur','work','fac']):[mode],reps=SES.settings.reps;
+  var mode=SES.settings.mode,order=mode==='compare'?shuffle(['amp','dur','work']):[mode],reps=SES.settings.reps;
   SES.blockOrder=order;
   for(var i=0;i<order.length;i++)await runBlock(order[i],i,order.length,reps);
   SES.endedAt=new Date().toISOString();scrEnd(performance.now());SES.score=sesScore();SES.screenTimeMs=scrTotals();SES.screenLog=SCRLOG.slice();
