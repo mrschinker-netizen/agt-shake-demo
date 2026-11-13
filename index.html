@@ -598,6 +598,16 @@ function calClear(){$('#calWord').innerHTML='';$('#calWord').className='big'}
 function calBg(mode){ /* 'black' | 'green' */
   var g=$('#calGreen');g.style.transition='none';g.style.opacity=(mode==='green')?1:0;
 }
+/* best sustained effort: highest mean amplitude over any 1 s window (ignores single-sample spikes) */
+function sust1s(series){
+  var best=0,n=series.length;
+  for(var i=0;i<n;i++){
+    var t0=series[i][0],sum=0,cov=0;
+    for(var k=i+1;k<n&&series[k][0]-t0<=1000;k++){var dt=series[k][0]-series[k-1][0];sum+=series[k][1]*dt;cov+=dt}
+    if(cov>=900)best=Math.max(best,sum/cov);
+  }
+  return best;
+}
 function calRound(scale,idx){
   return new Promise(function(resolve){
     var t0=now(),last=t0,peak=0,series=[],lvl=0,shown=-1,windowMs=5000;
@@ -612,7 +622,7 @@ function calRound(scale,idx){
       blue.style.transform='scaleY('+lvl.toFixed(3)+')';
       var n=5-Math.floor((t-t0)/1000);
       if(n!==shown&&n>=1){shown=n;calWord(String(n),'w-num','grow')}
-      if(t-t0>=windowMs){blue.style.transform='scaleY(0)';resolve({peak:peak,series:series,usedMs:Math.round(t-t0)});return}
+      if(t-t0>=windowMs){blue.style.transform='scaleY(0)';resolve({peak:peak,sust:sust1s(series),series:series,usedMs:Math.round(t-t0)});return}
       requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -659,15 +669,16 @@ async function calibrate(){
       }
     }
     tag.hidden=true;
-    var Amax=Math.max.apply(null,runs.map(function(r){return r.peak}));
+    var Pmax=Math.max.apply(null,runs.map(function(r){return r.peak}));
+    var Amax=Math.max.apply(null,runs.map(function(r){return r.sust})); /* maximum = best sustained 1 s, not a single peak */
     var minOk=Input.inject!==null?1:(Input.source==='motion'?2:150);
-    if(Amax<minOk){
+    if(Pmax<minOk){
       calWord('Too gentle to measure','w-rest','fade');
       $('#calWord').firstChild.style.fontSize='min(11vw,8vh)';$('#calWord').firstChild.style.whiteSpace='normal';$('#calWord').firstChild.style.textAlign='center';
       await sleep(2600);calClear();continue;
     }
     var works=runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w});
-    CAL={Amax:Amax,Wmax:Math.max.apply(null,works),source:Input.source,peaks:runs.map(function(r){return r.peak}),works:works,trials:CAL_TRIALS,
+    CAL={Amax:Amax,peakMax:Pmax,sust:runs.map(function(r){return Math.round(r.sust*10)/10}),Wmax:Math.max.apply(null,works),source:Input.source,peaks:runs.map(function(r){return r.peak}),works:works,trials:CAL_TRIALS,
          /* total scribble/shake in calibration: integral of the amplitude signal (px for scribble, m/s2 x s for shake), per trial and summed */
          rawTotals:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){w+=r.series[k][1]*(r.series[k][0]-r.series[k-1][0])/1000}return Math.round(w*10)/10}),
          meanAmps:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){w+=r.series[k][1]*(r.series[k][0]-r.series[k-1][0])/1000}return Math.round(w/(r.usedMs/1000)*10)/10}),
