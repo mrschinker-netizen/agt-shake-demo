@@ -444,8 +444,8 @@ function effortSpec(mode,idx){
   var pct=EFFORT_PCT[idx],fa=SES.settings.fixedAmp;
   if(mode==='amp')return{kind:'time',ampT:pct/100,durT:3,windowMs:6000,vis:{h:pct/100,secs:3},txt:['Strength '+pct+'%','3.0 s'],pct:pct};
   if(mode==='dur'){var d=[1.5,3,4.5,6][idx];return{kind:'time',ampT:fa,durT:d,windowMs:(d+3)*1000,vis:{h:fa,secs:d},txt:['Strength '+Math.round(fa*100)+'%',d.toFixed(1)+' s'],pct:pct}}
-  /* combined work: same 5 s window as one calibration trial, so a share of the calibrated maximum is a real share of what the person can do */
-  return{kind:'work',workT:pct/100,windowMs:5000,vis:{h:pct/100,secs:null},txt:['Total effort '+pct+'%'],pct:pct};
+  /* combined work: 10 s hidden limit; the target is a share of the calibrated 5 s maximum scaled to that window (x2) */
+  return{kind:'work',workT:pct/100,windowMs:10000,vis:{h:pct/100,secs:null},txt:['Total effort '+pct+'%'],pct:pct};
 }
 
 /* ---------- drawing ---------- */
@@ -667,7 +667,12 @@ async function calibrate(){
       await sleep(2600);calClear();continue;
     }
     var works=runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){var dt=(r.series[k][0]-r.series[k-1][0])/1000;w+=Math.max(0,r.series[k][1]/Amax-FLOOR)*dt}return w});
-    CAL={Amax:Amax,Wmax:Math.max.apply(null,works),source:Input.source,peaks:runs.map(function(r){return r.peak}),works:works,trials:CAL_TRIALS};
+    CAL={Amax:Amax,Wmax:Math.max.apply(null,works),source:Input.source,peaks:runs.map(function(r){return r.peak}),works:works,trials:CAL_TRIALS,
+         /* total scribble/shake in calibration: integral of the amplitude signal (px for scribble, m/s2 x s for shake), per trial and summed */
+         rawTotals:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){w+=r.series[k][1]*(r.series[k][0]-r.series[k-1][0])/1000}return Math.round(w*10)/10}),
+         meanAmps:runs.map(function(r){var w=0;for(var k=1;k<r.series.length;k++){w+=r.series[k][1]*(r.series[k][0]-r.series[k-1][0])/1000}return Math.round(w/(r.usedMs/1000)*10)/10}),
+         series:runs.map(function(r){return r.series.filter(function(x,i){return i%6===0}).map(function(x){return[x[0],Math.round(x[1]*10)/10]})})};
+    CAL.rawTotal=Math.round(CAL.rawTotals.reduce(function(a,b){return a+b},0)*10)/10;
     break;
   }
   SES.calibration=CAL;
@@ -713,7 +718,7 @@ async function practiceBlock(mode){
 }
 function execCfg(spec){
   var c={kind:spec.kind,Amax:CAL.Amax,windowMs:spec.windowMs,strict:SES.settings.strict,fillEl:$('#exFill'),barEl:$('#exBar'),winEl:$('#exWindow'),lineEl:$('#exLine')};
-  if(spec.kind==='time'){c.ampT=spec.ampT;c.durT=spec.durT;c.thr=spec.ampT}else{c.workT=spec.workT*CAL.Wmax;c.thr=FLOOR}
+  if(spec.kind==='time'){c.ampT=spec.ampT;c.durT=spec.durT;c.thr=spec.ampT}else{c.workT=spec.workT*CAL.Wmax*(spec.windowMs/5000);c.thr=FLOOR}
   return c;
 }
 
